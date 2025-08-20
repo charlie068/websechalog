@@ -1,6 +1,6 @@
 export const metadata = {
   title: "Hello World",
-  description: "Minimal Next.js App Router page",
+  description: "Minimal Next.js App",
 };
 
 export default function RootLayout({
@@ -10,7 +10,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+      </body>
     </html>
   );
 }
+
