@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "SechaLog Client Portal",
   description: "Accédez à vos données de pesée SechaLog",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({

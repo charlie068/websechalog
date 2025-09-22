@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as d3 from 'd3'
 import { Livraison, Parcelle } from '@/lib/supabase'
 
@@ -25,8 +25,58 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
   const lineChartRef = useRef<SVGSVGElement>(null)
   const rendementByParcelleRef = useRef<SVGSVGElement>(null)
 
+  // Container refs for responsive sizing
+  const barChartContainerRef = useRef<HTMLDivElement>(null)
+  const lineChartContainerRef = useRef<HTMLDivElement>(null)
+  const rendementChartContainerRef = useRef<HTMLDivElement>(null)
+
+  // State for chart dimensions
+  const [chartDimensions, setChartDimensions] = useState({
+    barChart: { width: 500, height: 300 },
+    lineChart: { width: 1000, height: 300 },
+    rendementChart: { width: 500, height: 300 }
+  })
+
+  // Responsive resize effect
   useEffect(() => {
-    
+    const updateDimensions = () => {
+      const barContainer = barChartContainerRef.current
+      const lineContainer = lineChartContainerRef.current
+      const rendementContainer = rendementChartContainerRef.current
+
+      if (barContainer && lineContainer && rendementContainer) {
+        const containerWidth = barContainer.offsetWidth - 48 // Account for padding
+        const lineContainerWidth = lineContainer.offsetWidth - 48
+
+        setChartDimensions({
+          barChart: {
+            width: Math.max(300, Math.min(containerWidth, 500)),
+            height: 300
+          },
+          lineChart: {
+            width: Math.max(400, Math.min(lineContainerWidth, 1200)),
+            height: 300
+          },
+          rendementChart: {
+            width: Math.max(300, Math.min(containerWidth, 500)),
+            height: 300
+          }
+        })
+      }
+    }
+
+    // Initial measurement
+    updateDimensions()
+
+    // Listen for window resize
+    window.addEventListener('resize', updateDimensions)
+
+    // Cleanup
+    return () => window.removeEventListener('resize', updateDimensions)
+  }, [])
+
+  useEffect(() => {
+
     if (livraisons.length === 0) {
       return
     }
@@ -109,15 +159,15 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     createBarChart(Array.from(parcelleData.entries()))
     createLineChart(timelineData)
     createRendementByParcelleChart(bentreeLivraisons, parcelles)
-  }, [livraisons, parcelles])
+  }, [livraisons, parcelles, chartDimensions])
 
   const createBarChart = (data: [string, any][]) => {
     const svg = d3.select(barChartRef.current)
     svg.selectAll("*").remove()
 
     const margin = { top: 20, right: 30, bottom: 60, left: 80 }
-    const width = 500 - margin.left - margin.right
-    const height = 300 - margin.bottom - margin.top
+    const width = chartDimensions.barChart.width - margin.left - margin.right
+    const height = chartDimensions.barChart.height - margin.bottom - margin.top
 
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
@@ -214,11 +264,11 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     svg.selectAll("*").remove()
 
     const margin = { top: 20, right: 200, bottom: 40, left: 80 }
-    const width = 1000 - margin.left - margin.right
-    const height = 300 - margin.bottom - margin.top
-    
+    const width = chartDimensions.lineChart.width - margin.left - margin.right
+    const height = chartDimensions.lineChart.height - margin.bottom - margin.top
+
     // Set SVG height back to normal
-    svg.attr('height', 300)
+    svg.attr('height', chartDimensions.lineChart.height)
 
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
@@ -928,8 +978,8 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     }
 
     const margin = { top: 20, right: 30, bottom: 60, left: 80 }
-    const width = 500 - margin.left - margin.right
-    const height = 300 - margin.bottom - margin.top
+    const width = chartDimensions.rendementChart.width - margin.left - margin.right
+    const height = chartDimensions.rendementChart.height - margin.bottom - margin.top
 
     const g = svg.append('g')
       .attr('transform', `translate(${margin.left},${margin.top})`)
@@ -992,31 +1042,52 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       {/* Top row - Production and Rendement side by side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Production par parcelle */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div ref={barChartContainerRef} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <span className="mr-2">📊</span>
             {safeT('dashboard.charts.productionByParcel', 'Production by parcel')}
           </h3>
-          <svg ref={barChartRef} width={500} height={300}></svg>
+          <div className="overflow-x-auto">
+            <svg
+              ref={barChartRef}
+              width={chartDimensions.barChart.width}
+              height={chartDimensions.barChart.height}
+              className="min-w-0"
+            ></svg>
+          </div>
         </div>
 
         {/* Rendement par parcelle */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div ref={rendementChartContainerRef} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <span className="mr-2">🌾</span>
             {safeT('dashboard.charts.yieldByParcel', 'Yield by parcel')}
           </h3>
-          <svg ref={rendementByParcelleRef} width={500} height={300}></svg>
+          <div className="overflow-x-auto">
+            <svg
+              ref={rendementByParcelleRef}
+              width={chartDimensions.rendementChart.width}
+              height={chartDimensions.rendementChart.height}
+              className="min-w-0"
+            ></svg>
+          </div>
         </div>
       </div>
 
       {/* Bottom row - Évolution temporelle full width */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div ref={lineChartContainerRef} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
           <span className="mr-2">📈</span>
           {safeT('dashboard.charts.temporalEvolution', 'Temporal evolution')}
         </h3>
-        <svg ref={lineChartRef} width={1000} height={300}></svg>
+        <div className="overflow-x-auto">
+          <svg
+            ref={lineChartRef}
+            width={chartDimensions.lineChart.width}
+            height={chartDimensions.lineChart.height}
+            className="min-w-0"
+          ></svg>
+        </div>
       </div>
     </div>
   )

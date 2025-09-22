@@ -6,7 +6,7 @@ import { Client, Parcelle } from '@/lib/supabase'
 import Link from 'next/link'
 import { User } from '@supabase/supabase-js'
 import SimpleNumberInput from './SimpleNumberInput'
-import SharedHeader from './SharedHeader'
+import ResponsiveLayout from './ResponsiveLayout'
 import { useTranslations } from '@/hooks/useTranslations'
 
 interface ProfileClientProps {
@@ -188,42 +188,43 @@ export default function ProfileClient({ client, user }: ProfileClientProps) {
     setParcelleMessage('')
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <SharedHeader client={client} currentPage="profile" safeT={safeT} />
-
-      <div className="flex">
-        {/* Left Sidebar */}
-        <div className="w-64 bg-white shadow-sm min-h-screen">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">👤 {safeT('navigation.profile', 'My Profile')}</h3>
-            <div className="space-y-2">
-              <div className="bg-green-100 text-green-800 border-l-4 border-green-500 px-3 py-2 rounded-lg">
-                <div className="font-medium flex items-center space-x-2">
-                  <span>👤</span>
-                  <span>{safeT('profile.personalInfo', 'Personal information')}</span>
-                </div>
-                <div className="text-xs text-green-600">{safeT('profile.manageData', 'Manage your data')}</div>
-              </div>
+  const sidebarContent = (
+    <>
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">👤 {safeT('navigation.profile', 'My Profile')}</h3>
+        <div className="space-y-2">
+          <div className="bg-green-100 text-green-800 border-l-4 border-green-500 px-3 py-2 rounded-lg">
+            <div className="font-medium flex items-center space-x-2">
+              <span>👤</span>
+              <span>{safeT('profile.personalInfo', 'Personal information')}</span>
             </div>
-          </div>
-
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 {safeT('dashboard.quickActions', 'Quick Actions')}</h3>
-            <div className="space-y-2">
-              <Link
-                href="/dashboard"
-                className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <span>🏠</span>
-                <span>{safeT('profile.backToDashboard', 'Back to Dashboard')}</span>
-              </Link>
-            </div>
+            <div className="text-xs text-green-600">{safeT('profile.manageData', 'Manage your data')}</div>
           </div>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 {safeT('dashboard.quickActions', 'Quick Actions')}</h3>
+        <div className="space-y-2">
+          <Link
+            href="/dashboard"
+            className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <span>🏠</span>
+            <span>{safeT('profile.backToDashboard', 'Back to Dashboard')}</span>
+          </Link>
+        </div>
+      </div>
+    </>
+  )
+
+  return (
+    <ResponsiveLayout
+      client={client}
+      currentPage="profile"
+      safeT={safeT}
+      sidebarContent={sidebarContent}
+    >
           {/* Profile Title */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">👤 {t('profile.title')}</h1>
@@ -552,8 +553,6 @@ export default function ProfileClient({ client, user }: ProfileClientProps) {
               </div>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+    </ResponsiveLayout>
   )
 }

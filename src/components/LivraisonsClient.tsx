@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Client, Livraison } from '@/lib/supabase'
 import D3Charts from './D3Charts'
 import Link from 'next/link'
-import SharedHeader from './SharedHeader'
+import ResponsiveLayout from './ResponsiveLayout'
 import { useTranslations } from '@/hooks/useTranslations'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
@@ -406,49 +406,50 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
   // Get unique parcelles for filter dropdown
   const uniqueParcelles = Array.from(new Set(initialLivraisons.map(liv => liv.parcelle).filter(Boolean)))
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <SharedHeader client={client} currentPage="deliveries" safeT={safeT} />
-
-      <div className="flex">
-        {/* Left Sidebar */}
-        <div className="w-64 bg-white shadow-sm min-h-screen">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">📦 {safeT('deliveries.title', 'Deliveries')}</h3>
-            <div className="space-y-2">
-              <div className="bg-indigo-100 text-indigo-800 border-l-4 border-indigo-500 px-3 py-2 rounded-lg">
-                <div className="font-medium flex items-center space-x-2">
-                  <span>📦</span>
-                  <span>{safeT('deliveries.title', 'Detailed Deliveries')}</span>
-                </div>
-                <div className="text-xs text-indigo-600">{safeT('deliveries.subtitle', 'Complete history of your deliveries')}</div>
-              </div>
+  const sidebarContent = (
+    <>
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">📦 {safeT('deliveries.title', 'Deliveries')}</h3>
+        <div className="space-y-2">
+          <div className="bg-indigo-100 text-indigo-800 border-l-4 border-indigo-500 px-3 py-2 rounded-lg">
+            <div className="font-medium flex items-center space-x-2">
+              <span>📦</span>
+              <span>{safeT('deliveries.title', 'Detailed Deliveries')}</span>
             </div>
-          </div>
-
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 {safeT('deliveries.sidebar.quickActions', 'Quick Actions')}</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => fetchFilteredData()}
-                className="w-full flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <span>🔄</span>
-                <span>{safeT('deliveries.actions.refresh', 'Refresh data')}</span>
-              </button>
-              <Link
-                href="/dashboard"
-                className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <span>🏠</span>
-                <span>{safeT('navigation.dashboard', 'Dashboard')}</span>
-              </Link>
-            </div>
+            <div className="text-xs text-indigo-600">{safeT('deliveries.subtitle', 'Complete history of your deliveries')}</div>
           </div>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 {safeT('deliveries.sidebar.quickActions', 'Quick Actions')}</h3>
+        <div className="space-y-2">
+          <button
+            onClick={() => fetchFilteredData()}
+            className="w-full flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <span>🔄</span>
+            <span>{safeT('deliveries.actions.refresh', 'Refresh data')}</span>
+          </button>
+          <Link
+            href="/dashboard"
+            className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <span>🏠</span>
+            <span>{safeT('navigation.dashboard', 'Dashboard')}</span>
+          </Link>
+        </div>
+      </div>
+    </>
+  )
+
+  return (
+    <ResponsiveLayout
+      client={client}
+      currentPage="deliveries"
+      safeT={safeT}
+      sidebarContent={sidebarContent}
+    >
           {/* Dashboard Title */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">📦 {safeT('deliveries.title', 'Detailed Deliveries')}</h1>
@@ -791,9 +792,6 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
             />
           </div>
         )}
-
-        </div>
-      </div>
-    </div>
+    </ResponsiveLayout>
   )
 }
