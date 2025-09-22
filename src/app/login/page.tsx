@@ -4,8 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useTranslations } from '@/hooks/useTranslations'
 
 export default function LoginPage() {
+  const { t } = useTranslations()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -19,26 +22,25 @@ export default function LoginPage() {
     setError('')
 
     try {
-      console.log('Attempting login with:', email)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log('Login response:', { data, error })
 
       if (error) {
-        console.error('Login error:', error)
         setError(`Erreur: ${error.message}`)
       } else if (data.user) {
-        console.log('Login successful, user:', data.user.id)
         setError('')
         setSuccess(true)
+        // Automatically redirect to dashboard after successful login
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 500)
       } else {
         setError('Aucune donnée utilisateur reçue')
       }
     } catch (err) {
-      console.error('Unexpected error:', err)
       setError(`Erreur inattendue: ${err}`)
     } finally {
       setIsLoading(false)
@@ -115,13 +117,23 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="text-center">
-            <Link
-              href="/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              Pas encore de compte ? S'inscrire
-            </Link>
+          <div className="text-center space-y-3">
+            <div>
+              <Link
+                href="/forgot-password"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
+            <div className="pt-2 border-t border-gray-200">
+              <p className="text-xs text-gray-500 mb-2">
+                Pas encore de compte ?
+              </p>
+              <p className="text-xs text-gray-700">
+                Contactez votre administrateur SechaLog pour créer un compte via l'application Desktop.
+              </p>
+            </div>
           </div>
         </form>
       </div>

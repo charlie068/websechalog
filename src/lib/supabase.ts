@@ -12,6 +12,10 @@ export interface Client {
   nom_client: string
   email: string
   adresse_complete: string
+  phone?: string
+  rue?: string
+  code_postal?: string
+  ville?: string
   supabase_user_id?: string
   last_modified: string
   created_at: string

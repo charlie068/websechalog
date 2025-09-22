@@ -4,10 +4,13 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Parcelle, Livraison } from '@/lib/supabase'
 import Link from 'next/link'
+import { useTranslations } from '@/hooks/useTranslations'
 
 interface ParcelleAnalysisCardProps {
   parcelle: Parcelle
   clientId: number
+  dateDebut?: string
+  dateFin?: string
 }
 
 interface ParcelleStats {
@@ -16,24 +19,52 @@ interface ParcelleStats {
   totalPoidsBrut: number
   derniereLivraison: string | null
   moyenneHumidite: number
-  rendement: number // tonnes per hectare
+  rendement: number | null // tonnes per hectare, null when no data
 }
 
-export default function ParcelleAnalysisCard({ parcelle, clientId }: ParcelleAnalysisCardProps) {
+export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, dateFin }: ParcelleAnalysisCardProps) {
+  const { t, loading: translationsLoading, language } = useTranslations()
+
+  // Safe translation function
+  const safeT = (key: string, fallback?: string): string => {
+    if (translationsLoading || typeof t !== 'function') {
+      return fallback || key
+    }
+    return t(key, fallback)
+  }
+
   const [stats, setStats] = useState<ParcelleStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function fetchParcelleStats() {
       try {
-        const { data: livraisons } = await supabase
+        let query = supabase
           .from('livraisons')
           .select('*')
           .eq('client_local_id', clientId)
           .eq('parcelle', parcelle.nom_parcelle)
 
+        // Add date filtering if provided
+        if (dateDebut) {
+          query = query.gte('date_pesee', dateDebut + 'T00:00:00.000Z')
+        }
+        if (dateFin) {
+          query = query.lte('date_pesee', dateFin + 'T23:59:59.999Z')
+        }
+
+        const { data: livraisons } = await query
+
         if (livraisons) {
           const totalLivraisons = livraisons.length
+          
+          // If no livraisons in the date range, don't show the card
+          if (totalLivraisons === 0) {
+            setStats(null)
+            setIsLoading(false)
+            return
+          }
+          
           const totalPoidsSec = livraisons.reduce((sum: number, liv: any) => sum + (liv.poids_sec || 0), 0)
           const totalPoidsBrut = livraisons.reduce((sum: number, liv: any) => sum + (liv.poids_brut || 0), 0)
           
@@ -41,17 +72,29 @@ export default function ParcelleAnalysisCard({ parcelle, clientId }: ParcelleAna
             ? livraisons.sort((a: any, b: any) => new Date(b.date_pesee).getTime() - new Date(a.date_pesee).getTime())[0].date_pesee
             : null
 
-          const humiditeValues = livraisons
-            .map((liv: any) => liv.humidite)
-            .filter((h: any) => h !== null && h !== undefined)
+          // Calculate weighted average humidity (weighted by gross weight)
+          const livraisonsWithHumidite = livraisons.filter((liv: any) => 
+            liv.humidite !== null && liv.humidite !== undefined && liv.poids_brut
+          )
           
-          const moyenneHumidite = humiditeValues.length > 0
-            ? (humiditeValues.reduce((sum: number, h: number) => sum + h, 0) / humiditeValues.length)
+          let totalWeightedHumidite = 0
+          let totalWeightForHumidite = 0
+          
+          livraisonsWithHumidite.forEach((liv: any) => {
+            const weight = liv.poids_brut || 0
+            totalWeightedHumidite += liv.humidite * weight
+            totalWeightForHumidite += weight
+          })
+          
+          const moyenneHumidite = totalWeightForHumidite > 0 
+            ? totalWeightedHumidite / totalWeightForHumidite 
             : 0
 
           // Calculate rendement (yield per hectare)
           const totalPoidsSecTonnes = totalPoidsSec / 1000 // Convert to tonnes
-          const rendement = parcelle.surface_hectares > 0 ? totalPoidsSecTonnes / parcelle.surface_hectares : 0
+          const rendement = (parcelle.surface_hectares > 0 && totalPoidsSec > 0 && totalLivraisons > 0) 
+            ? totalPoidsSecTonnes / parcelle.surface_hectares 
+            : null
 
           setStats({
             totalLivraisons,
@@ -63,14 +106,13 @@ export default function ParcelleAnalysisCard({ parcelle, clientId }: ParcelleAna
           })
         }
       } catch (error) {
-        console.error('Error fetching parcelle stats:', error)
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchParcelleStats()
-  }, [parcelle.local_id, clientId])
+  }, [parcelle.local_id, clientId, dateDebut, dateFin])
 
   if (isLoading) {
     return (
@@ -82,6 +124,11 @@ export default function ParcelleAnalysisCard({ parcelle, clientId }: ParcelleAna
         </div>
       </div>
     )
+  }
+
+  // Don't render the card if no livraisons in the selected date range
+  if (!stats) {
+    return null
   }
 
   return (
@@ -103,42 +150,42 @@ export default function ParcelleAnalysisCard({ parcelle, clientId }: ParcelleAna
               <div className="text-2xl font-bold text-blue-600">
                 {stats.totalLivraisons}
               </div>
-              <div className="text-sm text-gray-600">Livraisons</div>
+              <div className="text-sm text-gray-600">{safeT('deliveries.banners.totalDeliveries', 'Deliveries')}</div>
             </div>
             <div className="text-center p-3 bg-green-50 rounded">
               <div className="text-2xl font-bold text-green-600">
                 {stats.totalPoidsSec.toFixed(0)} kg
               </div>
-              <div className="text-sm text-gray-600">Poids sec total</div>
+              <div className="text-sm text-gray-600">{safeT('deliveries.banners.totalWeight', 'Total dry weight')}</div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-yellow-50 rounded">
-              <div className="text-2xl font-bold text-yellow-600">
-                {stats.totalPoidsBrut.toFixed(0)} kg
+            <div className="text-center p-3 bg-blue-50 rounded">
+              <div className="text-2xl font-bold text-blue-600">
+                {parcelle.surface_hectares ? `${parcelle.surface_hectares.toFixed(2)} ha` : 'ND'}
               </div>
-              <div className="text-sm text-gray-600">Poids brut total</div>
+              <div className="text-sm text-gray-600">📐 {safeT('dashboard.parcels.surface', 'Surface')}</div>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded">
               <div className="text-2xl font-bold text-purple-600">
                 {stats.moyenneHumidite.toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-600">Humidité moyenne</div>
+              <div className="text-sm text-gray-600">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</div>
             </div>
           </div>
 
           {/* Rendement section */}
           <div className="bg-orange-50 rounded p-3 text-center">
             <div className="text-2xl font-bold text-orange-600">
-              {stats.rendement.toFixed(1)} t/ha
+              {stats.rendement !== null ? `${stats.rendement.toFixed(2)} t/ha` : 'ND'}
             </div>
-            <div className="text-sm text-gray-600">🌾 Rendement</div>
+            <div className="text-sm text-gray-600">🌾 {safeT('dashboard.parcels.yield', 'Yield')}</div>
           </div>
 
           {stats.derniereLivraison && (
             <div className="text-sm text-gray-600 text-center">
-              Dernière livraison: {new Date(stats.derniereLivraison).toLocaleDateString('fr-FR')} à {new Date(stats.derniereLivraison).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {safeT('deliveries.banners.lastDelivery', 'Last delivery')}: {new Date(stats.derniereLivraison).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US')} {language === 'fr' ? 'à' : 'at'} {new Date(stats.derniereLivraison).toLocaleTimeString(language === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
             </div>
           )}
 
@@ -149,7 +196,7 @@ export default function ParcelleAnalysisCard({ parcelle, clientId }: ParcelleAna
               className="w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center space-x-2"
             >
               <span>📋</span>
-              <span>Voir les détails</span>
+              <span>{safeT('dashboard.actions.viewDetails', 'View details')}</span>
             </Link>
           </div>
         </div>

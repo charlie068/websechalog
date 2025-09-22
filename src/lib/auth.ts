@@ -35,7 +35,6 @@ export async function getUser() {
     const { data: { user } } = await supabase.auth.getUser()
     return user
   } catch (error) {
-    console.error('Error:', error)
     return null
   }
 }
@@ -51,7 +50,6 @@ export async function getClientData(userId: string) {
     .single()
     
   if (error) {
-    console.error('Error fetching client:', error)
     return null
   }
   

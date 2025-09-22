@@ -2,12 +2,23 @@
 
 import { useState, useMemo } from 'react'
 import { Livraison } from '@/lib/supabase'
+import { useTranslations } from '@/hooks/useTranslations'
 
 interface LivraisonsTableProps {
   livraisons: Livraison[]
 }
 
 export default function LivraisonsTable({ livraisons }: LivraisonsTableProps) {
+  const { t, loading: translationsLoading } = useTranslations()
+
+  // Safe translation function
+  const safeT = (key: string, fallback?: string): string => {
+    if (translationsLoading || typeof t !== 'function') {
+      return fallback || key
+    }
+    return t(key, fallback)
+  }
+
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [sortField, setSortField] = useState<keyof Livraison>('date_pesee')
@@ -116,7 +127,7 @@ export default function LivraisonsTable({ livraisons }: LivraisonsTableProps) {
                 Humidité {sortField === 'humidite' && (sortDirection === 'desc' ? '↓' : '↑')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Chauffeur
+                {safeT('deliveries.table.driver', 'Driver')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Type
@@ -168,8 +179,8 @@ export default function LivraisonsTable({ livraisons }: LivraisonsTableProps) {
       {filteredAndSortedLivraisons.length === 0 && (
         <div className="p-8 text-center text-gray-500">
           {searchTerm || typeFilter !== 'all' 
-            ? 'Aucune livraison ne correspond à vos critères de recherche.'
-            : 'Aucune livraison trouvée.'}
+            ? safeT('deliveries.noDeliveriesFound', 'No deliveries match your search criteria.')
+            : safeT('deliveries.noDeliveriesFoundGeneral', 'No deliveries found.')}
         </div>
       )}
     </div>

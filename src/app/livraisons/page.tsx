@@ -3,9 +3,10 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Client, Livraison } from '@/lib/supabase'
 import LivraisonsClient from '@/components/LivraisonsClient'
+import NoClientAccess from '@/components/NoClientAccess'
 
 export default async function LivraisonsPage() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,10 +20,11 @@ export default async function LivraisonsPage() {
   )
   
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (authError || !user) {
     redirect('/login')
   }
 
@@ -30,12 +32,12 @@ export default async function LivraisonsPage() {
   const { data: clients } = await supabase
     .from('clients')
     .select('*')
-    .eq('supabase_user_id', session.user.id)
+    .eq('supabase_user_id', user.id)
 
   const client = clients?.[0] as Client | undefined
 
   if (!client) {
-    redirect('/login')
+    return <NoClientAccess />
   }
 
   // Get all livraisons for this client (last 90 days for initial load)

@@ -3,9 +3,10 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Client, Parcelle, Livraison } from '@/lib/supabase'
 import DashboardClient from '@/components/DashboardClient'
+import NoClientAccess from '@/components/NoClientAccess'
 
 export default async function DashboardPage() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,10 +20,11 @@ export default async function DashboardPage() {
   )
   
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (authError || !user) {
     redirect('/login')
   }
 
@@ -30,19 +32,12 @@ export default async function DashboardPage() {
   const { data: clients } = await supabase
     .from('clients')
     .select('*')
-    .eq('supabase_user_id', session.user.id)
+    .eq('supabase_user_id', user.id)
 
   const client = clients?.[0] as Client | undefined
 
   if (!client) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Accès refusé</h1>
-          <p className="text-gray-600">Aucun client trouvé pour votre compte.</p>
-        </div>
-      </div>
-    )
+    return <NoClientAccess />
   }
 
   // Get parcelles for this client

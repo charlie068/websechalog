@@ -6,49 +6,79 @@ import { supabase } from '@/lib/supabase'
 import { Client, Livraison } from '@/lib/supabase'
 import D3Charts from './D3Charts'
 import Link from 'next/link'
+import SharedHeader from './SharedHeader'
+import { useTranslations } from '@/hooks/useTranslations'
+import DatePicker from 'react-datepicker'
+import "react-datepicker/dist/react-datepicker.css"
 
 interface LivraisonsClientProps {
   client: Client
   initialLivraisons: Livraison[]
 }
 
-// Helper function to convert product ID to product name
-const getProductName = (productId: number | null | undefined): string => {
+// Helper function to convert product ID to product name with translation
+const getProductName = (productId: number | null | undefined, safeT: (key: string, fallback?: string) => string): string => {
   if (!productId) return 'N/A'
-  
+
   const productMap: { [key: number]: string } = {
-    1: 'Maïs',
-    2: 'Blé',
-    3: 'Orge',
-    4: 'Soja',
-    5: 'Tournesol',
-    6: 'Colza'
+    1: safeT('products.mais', 'Corn'),
+    2: safeT('products.ble', 'Wheat'),
+    3: safeT('products.orge', 'Barley'),
+    4: safeT('products.soja', 'Soybean'),
+    5: safeT('products.tournesol', 'Sunflower'),
+    6: safeT('products.colza', 'Rapeseed')
   }
-  
-  return productMap[productId] || `Produit ${productId}`
+
+  return productMap[productId] || `${safeT('products.unknown', 'Product')} ${productId}`
 }
 
 // Helper function to format rendement
 const formatRendement = (rendement: number | null): string => {
-  if (rendement === null || rendement === 0) return 'N/A'
+  if (rendement === null || rendement === 0 || !rendement) return 'N/A'
   return rendement.toFixed(2)
 }
 
+// Product definitions with safe translation
+const getProducts = (safeT: (key: string, fallback?: string) => string) => [
+  { id: 0, name: safeT('products.all', 'All products'), emoji: '🌾', color: 'gray' },
+  { id: 1, name: safeT('products.mais', 'Corn'), emoji: '🌽', color: 'yellow' },
+  { id: 2, name: safeT('products.ble', 'Wheat'), emoji: '🌾', color: 'amber' },
+  { id: 3, name: safeT('products.orge', 'Barley'), emoji: '🌾', color: 'green' },
+  { id: 4, name: safeT('products.soja', 'Soybean'), emoji: '🟢', color: 'green' },
+  { id: 5, name: safeT('products.tournesol', 'Sunflower'), emoji: '🌻', color: 'yellow' },
+  { id: 6, name: safeT('products.colza', 'Rapeseed'), emoji: '🟡', color: 'yellow' }
+]
+
+const getProductInfo = (productId: number | null | undefined, safeT: (key: string, fallback?: string) => string) => {
+  if (!productId) return { name: 'N/A', emoji: '❓', color: 'gray' }
+
+  const products = getProducts(safeT)
+  const product = products.find(p => p.id === productId)
+  return product || { name: `${safeT('products.unknown', 'Unknown product')} ${productId}`, emoji: '❓', color: 'gray' }
+}
+
 export default function LivraisonsClient({ client, initialLivraisons }: LivraisonsClientProps) {
+  const { t, loading: translationsLoading } = useTranslations()
+
+  // Safe translation function
+  const safeT = (key: string, fallback?: string): string => {
+    try {
+      const result = t(key, fallback)
+      return result
+    } catch (error) {
+      return fallback || key
+    }
+  }
+
   const searchParams = useSearchParams()
   const [livraisons, setLivraisons] = useState<Livraison[]>(initialLivraisons)
   const [parcelles, setParcelles] = useState<{[name: string]: {surface_hectares?: number}}>({})
   const [loading, setLoading] = useState(false)
   
-  console.log('LivraisonsClient render:', { 
-    initialLivraisons: initialLivraisons.length, 
-    currentLivraisons: livraisons.length,
-    loading 
-  })
   
   // Filter states
-  const [dateDebut, setDateDebut] = useState('')
-  const [dateFin, setDateFin] = useState('')
+  const [dateDebut, setDateDebut] = useState<Date | null>(null)
+  const [dateFin, setDateFin] = useState<Date | null>(null)
   const [parcelleFilter, setParcelleFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -59,7 +89,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     totalPoidsSec: 0,
     totalPoidsBrut: 0,
     moyenneHumidite: 0,
-    moyenneRendement: 0
+    moyenneRendement: 0,
+    totalEntrees: 0,
+    totalSorties: 0,
+    balance: 0
   })
 
   // Per-parcelle stats
@@ -71,6 +104,75 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     humidite: number
   }}>({})
 
+  // Calculate initial statistics for initialLivraisons
+  const calculateInitialStats = () => {
+    const filtered = initialLivraisons
+
+    // Calculate basic stats
+    const totalPoidsSec = filtered.reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
+    const totalPoidsBrut = filtered.reduce((sum, liv) => sum + (liv.poids_brut || 0), 0)
+
+    const humiditeValues = filtered
+      .map(liv => liv.humidite)
+      .filter(h => h !== null && h !== undefined)
+
+    const moyenneHumidite = humiditeValues.length > 0
+      ? (humiditeValues.reduce((sum, h) => sum + h, 0) / humiditeValues.length)
+      : 0
+
+    // Calculate rendement (yield per hectare) - only for entree operations from parcelles with area data
+    // Always include raw database parcelle names for lookup, regardless of language
+    const parcelleNamesWithArea = new Set(Object.keys(parcelles).filter(name =>
+      parcelles[name]?.surface_hectares && parcelles[name].surface_hectares > 0
+    ))
+
+    // Also ensure raw database parcelle names are included for lookup
+    const allParcelleNames = [...parcelleNamesWithArea]
+    allParcelleNames.forEach(name => {
+      // Add both translated and untranslated versions for reliable lookup
+      if (name === safeT('common.other', 'Other')) {
+        parcelleNamesWithArea.add('Autres')
+      } else if (name === 'Autres') {
+        parcelleNamesWithArea.add(safeT('common.other', 'Other'))
+      }
+    })
+
+    // Filter to only include entree operations from parcelles with area data
+    const livraisonsFromParcellesWithArea = filtered.filter(liv =>
+      liv.type_operation === 'entree' && liv.parcelle && parcelleNamesWithArea.has(liv.parcelle)
+    )
+
+    const totalPoidsSecFromAreaParcelles = livraisonsFromParcellesWithArea.reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
+    const surfaceTotale = Array.from(parcelleNamesWithArea).reduce((sum, name) =>
+      sum + (parcelles[name]?.surface_hectares || 0), 0
+    )
+
+    const totalPoidsSecTonnes = totalPoidsSecFromAreaParcelles / 1000 // Convert to tonnes
+    const moyenneRendement = (surfaceTotale > 0 && totalPoidsSecFromAreaParcelles > 0) ? totalPoidsSecTonnes / surfaceTotale : null
+
+    // Calculate entrées, sorties, and balance
+    const totalEntrees = filtered
+      .filter(liv => liv.type_operation === 'entree')
+      .reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
+
+    const totalSorties = filtered
+      .filter(liv => liv.type_operation === 'sortie')
+      .reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
+
+    const balance = totalEntrees - totalSorties
+
+    setStats({
+      totalLivraisons: filtered.length,
+      totalPoidsSec,
+      totalPoidsBrut,
+      moyenneHumidite,
+      moyenneRendement,
+      totalEntrees,
+      totalSorties,
+      balance
+    })
+  }
+
   // Set initial filters from URL params and fetch parcelles data
   useEffect(() => {
     const parcelle = searchParams.get('parcelle')
@@ -79,16 +181,26 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     if (parcelle) setParcelleFilter(parcelle)
     if (type) setTypeFilter(type)
     
-    // Set default dates (last 90 days)
+    // Set default dates (August 1st to today, like dashboard)
     const today = new Date()
-    const ninetyDaysAgo = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000)
-    
-    setDateDebut(ninetyDaysAgo.toISOString().split('T')[0])
-    setDateFin(today.toISOString().split('T')[0])
+    const currentYear = today.getFullYear()
+    const currentMonth = today.getMonth()
+    const augustYear = currentMonth < 7 ? currentYear - 1 : currentYear
+    const august1st = new Date(augustYear, 7, 1)
+
+    setDateDebut(august1st)
+    setDateFin(today)
 
     // Fetch parcelles data for surface area calculations
     fetchParcelles()
   }, [searchParams])
+
+  // Calculate initial statistics when parcelles data is loaded
+  useEffect(() => {
+    if (Object.keys(parcelles).length > 0) {
+      calculateInitialStats()
+    }
+  }, [parcelles, initialLivraisons])
 
   const fetchParcelles = async () => {
     try {
@@ -99,8 +211,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
       const parcelleMap: {[name: string]: {surface_hectares?: number}} = {}
       
-      // Add "Autres" parcelle (may not be in parcelles table)
+      // Add "other" parcelle entries (may not be in parcelles table)
+      // Store both the raw database value and translated version
       parcelleMap['Autres'] = { surface_hectares: undefined }
+      parcelleMap[safeT('common.other', 'Other')] = { surface_hectares: undefined }
       
       parcellesData?.forEach(p => {
         if (p.nom_parcelle) {
@@ -110,7 +224,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
       setParcelles(parcelleMap)
     } catch (error) {
-      console.error('Error fetching parcelles:', error)
+      // Silently handle error
     }
   }
 
@@ -127,30 +241,28 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
   // Fetch filtered data
   const fetchFilteredData = async () => {
-    console.log('fetchFilteredData called with filters:', { dateDebut, dateFin, parcelleFilter, typeFilter })
-    
     // Don't fetch if we don't have required date filters
     if (!dateDebut || !dateFin) {
-      console.log('Skipping fetch - missing date filters')
       return
     }
-    
+
     setLoading(true)
     try {
+      // Add time to make end date inclusive of the full day
+      const dateFinInclusive = dateFin.toISOString().split('T')[0] + 'T23:59:59.999Z'
+      const dateDebutInclusive = dateDebut.toISOString().split('T')[0] + 'T00:00:00.000Z'
+
       let query = supabase
         .from('livraisons')
         .select('*')
         .eq('client_local_id', client.local_id)
-
-      if (dateDebut) query = query.gte('date_pesee', dateDebut)
-      if (dateFin) query = query.lte('date_pesee', dateFin)
+        .gte('date_pesee', dateDebutInclusive)
+        .lte('date_pesee', dateFinInclusive)
       if (parcelleFilter) query = query.eq('parcelle', parcelleFilter)
       if (typeFilter) query = query.eq('type_operation', typeFilter)
       
       const { data, error } = await query.order('date_pesee', { ascending: false })
-      
-      console.log('fetchFilteredData result:', { data: data?.length, error })
-      
+
       if (data) {
         let filtered = data as Livraison[]
         
@@ -168,44 +280,81 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         const totalPoidsSec = filtered.reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
         const totalPoidsBrut = filtered.reduce((sum, liv) => sum + (liv.poids_brut || 0), 0)
         
-        const humiditeValues = filtered
-          .map(liv => liv.humidite)
-          .filter(h => h !== null && h !== undefined)
-        
-        const moyenneHumidite = humiditeValues.length > 0
-          ? (humiditeValues.reduce((sum, h) => sum + h, 0) / humiditeValues.length)
+        // Calculate weighted average humidity for entree operations (weighted by gross weight)
+        const livraisonsWithHumidite = filtered.filter(liv =>
+          liv.type_operation === 'entree' &&
+          liv.humidite !== null && liv.humidite !== undefined && liv.poids_brut
+        )
+
+        let totalWeightedHumidite = 0
+        let totalWeightForHumidite = 0
+
+        livraisonsWithHumidite.forEach(liv => {
+          const weight = liv.poids_brut || 0
+          totalWeightedHumidite += liv.humidite * weight
+          totalWeightForHumidite += weight
+        })
+
+        const moyenneHumidite = totalWeightForHumidite > 0
+          ? totalWeightedHumidite / totalWeightForHumidite
           : 0
 
-        // Calculate weighted average rendement considering surface areas
-        let totalRendementWeight = 0
-        let totalWeight = 0
-        
-        filtered.forEach(liv => {
-          const parcelleName = liv.parcelle || 'Autres'
-          const surface = parcelles[parcelleName]?.surface_hectares
-          if (surface && surface > 0 && liv.poids_sec) {
-            const rendement = (liv.poids_sec / 1000) / surface // t/ha
-            totalRendementWeight += rendement * liv.poids_sec // weighted by poids_sec
-            totalWeight += liv.poids_sec
+        // Calculate rendement (yield per hectare) - only for entree operations from parcelles with area data
+        const parcelleNamesWithArea = new Set(Object.keys(parcelles).filter(name =>
+          parcelles[name]?.surface_hectares && parcelles[name].surface_hectares > 0
+        ))
+
+        // Also ensure raw database parcelle names are included for lookup
+        const allParcelleNames = [...parcelleNamesWithArea]
+        allParcelleNames.forEach(name => {
+          // Add both translated and untranslated versions for reliable lookup
+          if (name === safeT('common.other', 'Other')) {
+            parcelleNamesWithArea.add('Autres')
+          } else if (name === 'Autres') {
+            parcelleNamesWithArea.add(safeT('common.other', 'Other'))
           }
         })
 
-        const moyenneRendement = totalWeight > 0 ? totalRendementWeight / totalWeight : null
+        // Filter to only include entree operations from parcelles with area data
+        const livraisonsFromParcellesWithArea = filtered.filter(liv =>
+          liv.type_operation === 'entree' && liv.parcelle && parcelleNamesWithArea.has(liv.parcelle)
+        )
 
+        const totalPoidsSecFromAreaParcelles = livraisonsFromParcellesWithArea.reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
+        const surfaceTotale = Array.from(parcelleNamesWithArea).reduce((sum, name) =>
+          sum + (parcelles[name]?.surface_hectares || 0), 0
+        )
+
+        const totalPoidsSecTonnes = totalPoidsSecFromAreaParcelles / 1000 // Convert to tonnes
+        const moyenneRendement = (surfaceTotale > 0 && totalPoidsSecFromAreaParcelles > 0) ? totalPoidsSecTonnes / surfaceTotale : null
+
+        // Calculate entrées, sorties, and balance
+        const totalEntrees = filtered
+          .filter(liv => liv.type_operation === 'entree')
+          .reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
+
+        const totalSorties = filtered
+          .filter(liv => liv.type_operation === 'sortie')
+          .reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
+
+        const balance = totalEntrees - totalSorties
 
         setStats({
           totalLivraisons: filtered.length,
           totalPoidsSec,
           totalPoidsBrut,
           moyenneHumidite,
-          moyenneRendement
+          moyenneRendement,
+          totalEntrees,
+          totalSorties,
+          balance
         })
 
         // Calculate per-parcelle stats
         const parcelleStats: {[parcelle: string]: {livraisons: number, poidsSec: number, poidsBrut: number, rendement: number, humidite: number}} = {}
         
         filtered.forEach(liv => {
-          const parcelleName = liv.parcelle || 'Autres'
+          const parcelleName = liv.parcelle || safeT('common.other', 'Other')
           if (!parcelleStats[parcelleName]) {
             parcelleStats[parcelleName] = {
               livraisons: 0,
@@ -225,7 +374,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         Object.keys(parcelleStats).forEach(parcelle => {
           const stats = parcelleStats[parcelle]
           stats.humidite = stats.livraisons > 0 ? stats.humidite / stats.livraisons : 0
-          
+
           // Calculate rendement in t/ha
           const surface = parcelles[parcelle]?.surface_hectares
           if (surface && surface > 0 && stats.poidsSec > 0) {
@@ -238,7 +387,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         setStatsParcelle(parcelleStats)
       }
     } catch (error) {
-      console.error('Error fetching filtered data:', error)
+      // Silently handle error
     } finally {
       setLoading(false)
     }
@@ -246,14 +395,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
   // Auto-fetch when filters change (but not on initial render if we have initial data)
   useEffect(() => {
-    console.log('Filter change useEffect triggered:', { dateDebut, dateFin, parcelleFilter, typeFilter, searchTerm })
-    
     // Only fetch if we have meaningful filter changes or if dates are set
     if (dateDebut && dateFin && (parcelleFilter || typeFilter || searchTerm)) {
-      console.log('Calling fetchFilteredData due to specific filter change')
       fetchFilteredData()
     } else if (dateDebut && dateFin && !parcelleFilter && !typeFilter && !searchTerm) {
-      console.log('Using date-based fetch for general date range')
       fetchFilteredData()
     }
   }, [dateDebut, dateFin, parcelleFilter, typeFilter, searchTerm, client.local_id])
@@ -263,62 +408,104 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Section - matching C# style */}
-      <div className="bg-blue-600 text-white py-6 mb-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="text-center flex-1">
-              <h1 className="text-2xl font-bold mb-2">📦 LIVRAISONS DÉTAILLÉES</h1>
-              <p className="text-blue-100">Suivi complet des entrées et sorties par parcelle</p>
+      <SharedHeader client={client} currentPage="deliveries" safeT={safeT} />
+
+      <div className="flex">
+        {/* Left Sidebar */}
+        <div className="w-64 bg-white shadow-sm min-h-screen">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">📦 {safeT('deliveries.title', 'Deliveries')}</h3>
+            <div className="space-y-2">
+              <div className="bg-indigo-100 text-indigo-800 border-l-4 border-indigo-500 px-3 py-2 rounded-lg">
+                <div className="font-medium flex items-center space-x-2">
+                  <span>📦</span>
+                  <span>{safeT('deliveries.title', 'Detailed Deliveries')}</span>
+                </div>
+                <div className="text-xs text-indigo-600">{safeT('deliveries.subtitle', 'Complete history of your deliveries')}</div>
+              </div>
             </div>
-            <Link
-              href="/dashboard"
-              className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-md text-sm font-medium flex items-center space-x-2"
-            >
-              <span>🏠</span>
-              <span>Tableau de bord</span>
-            </Link>
+          </div>
+
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 {safeT('deliveries.sidebar.quickActions', 'Quick Actions')}</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => fetchFilteredData()}
+                className="w-full flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <span>🔄</span>
+                <span>{safeT('deliveries.actions.refresh', 'Refresh data')}</span>
+              </button>
+              <Link
+                href="/dashboard"
+                className="w-full flex items-center space-x-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <span>🏠</span>
+                <span>{safeT('navigation.dashboard', 'Dashboard')}</span>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Filter Section - matching C# style */}
+        {/* Main Content */}
+        <div className="flex-1 p-6">
+          {/* Dashboard Title */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">📦 {safeT('deliveries.title', 'Detailed Deliveries')}</h1>
+            <p className="text-gray-600">{safeT('deliveries.subtitle', 'Complete history of your deliveries')}</p>
+          </div>
+
+          {/* Filter Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end">
-            {/* Date Filters */}
+          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-end">
+            {/* Date début */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                📅 Période:
+                📅 {safeT('deliveries.filters.startDate', 'Start date')}:
               </label>
-              <div className="flex space-x-2">
-                <input
-                  type="date"
-                  value={dateDebut}
-                  onChange={(e) => setDateDebut(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <span className="text-gray-500 self-center text-sm">au</span>
-                <input
-                  type="date"
-                  value={dateFin}
-                  onChange={(e) => setDateFin(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+              <DatePicker
+                selected={dateDebut}
+                onChange={(date) => {
+                  setDateDebut(date)
+                }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Sélectionner une date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                maxDate={dateFin || new Date()}
+                calendarStartDay={1}
+              />
+            </div>
+
+            {/* Date fin */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                📅 {safeT('deliveries.filters.endDate', 'End date')}:
+              </label>
+              <DatePicker
+                selected={dateFin}
+                onChange={(date) => {
+                  setDateFin(date)
+                }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Sélectionner une date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                minDate={dateDebut}
+                maxDate={new Date()}
+                calendarStartDay={1}
+              />
             </div>
 
             {/* Parcelle Filter */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                🌾 Parcelle:
+                🌾 {safeT('deliveries.filters.parcel', 'Parcel')}:
               </label>
               <select
                 value={parcelleFilter}
                 onChange={(e) => setParcelleFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">Toutes les parcelles</option>
+                <option value="">{safeT('deliveries.filters.allParcels', 'All parcels')}</option>
                 {uniqueParcelles.map(parcelle => (
                   <option key={parcelle} value={parcelle}>{parcelle}</option>
                 ))}
@@ -328,23 +515,23 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
             {/* Type Filter */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                📋 Type:
+                📋 {safeT('deliveries.filters.operation', 'Type')}:
               </label>
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">Tous les types</option>
-                <option value="entree">📥 Entrées</option>
-                <option value="sortie">📤 Sorties</option>
+                <option value="">{safeT('deliveries.filters.allOperations', 'All operations')}</option>
+                <option value="entree">📥 {safeT('deliveries.operations.entree', 'Entries')}</option>
+                <option value="sortie">📤 {safeT('deliveries.operations.sortie', 'Exits')}</option>
               </select>
             </div>
 
             {/* Search */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                🔍 Recherche:
+                🔍 {safeT('common.search', 'Search')}:
               </label>
               <input
                 type="text"
@@ -364,41 +551,77 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-md font-semibold flex items-center space-x-2"
             >
               <span>📊</span>
-              <span>{loading ? 'Actualisation...' : 'Actualiser'}</span>
+              <span>{loading ? safeT('common.loading', 'Loading...') : safeT('deliveries.actions.refresh', 'Refresh')}</span>
             </button>
-            
-            <Link
-              href="/dashboard"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-md font-semibold flex items-center space-x-2"
+
+            <button
+              onClick={() => {
+                // Reset to default values (August 1st to today, like dashboard)
+                const today = new Date()
+                const currentYear = today.getFullYear()
+                const currentMonth = today.getMonth()
+                const augustYear = currentMonth < 7 ? currentYear - 1 : currentYear
+                const august1st = new Date(augustYear, 7, 1)
+
+                setDateDebut(august1st)
+                setDateFin(today)
+                setParcelleFilter('')
+                setTypeFilter('')
+                setSearchTerm('')
+              }}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-md font-medium flex items-center space-x-2 text-sm"
             >
-              <span>🌾</span>
-              <span>Analyse Parcelle</span>
-            </Link>
+              <span>🔄</span>
+              <span>{safeT('deliveries.actions.reset', 'Reset')}</span>
+            </button>
+
           </div>
         </div>
 
-        {/* Summary Statistics - matching C# style */}
-        <div className="bg-orange-500 text-white rounded-lg p-6 mb-6">
-          <div className="grid grid-cols-2 lg:grid-cols-7 gap-6">
+        {/* Entrées/Sorties/Balance Statistics */}
+        <div className="bg-blue-100 text-gray-800 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <span className="mr-2">⚖️</span>
+            {safeT('deliveries.summary.entryExitBalance', 'Entry/Exit Balance')}
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="text-center">
-              <p className="text-xs font-semibold text-orange-100 uppercase tracking-wide">LIVRAISONS</p>
-              <p className="text-2xl font-bold">{stats.totalLivraisons}</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📥 {safeT('deliveries.banners.totalEntries', 'ENTRIES')} (kg)</p>
+              <p className="text-2xl font-bold text-green-600">{stats.totalEntrees.toLocaleString()}</p>
             </div>
             <div className="text-center">
-              <p className="text-xs font-semibold text-orange-100 uppercase tracking-wide">POIDS SEC (KG)</p>
-              <p className="text-2xl font-bold">{stats.totalPoidsSec.toLocaleString()}</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📤 {safeT('deliveries.banners.totalExits', 'EXITS')} (kg)</p>
+              <p className="text-2xl font-bold text-red-600">{stats.totalSorties.toLocaleString()}</p>
             </div>
             <div className="text-center">
-              <p className="text-xs font-semibold text-orange-100 uppercase tracking-wide">POIDS BRUT (KG)</p>
-              <p className="text-2xl font-bold">{stats.totalPoidsBrut.toLocaleString()}</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">⚖️ {safeT('deliveries.banners.netBalance', 'BALANCE')} (kg)</p>
+              <p className="text-2xl font-bold text-blue-600">{stats.balance.toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Rendement Information */}
+        <div className="bg-green-50 rounded-lg shadow p-6 mb-8">
+          <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <span className="mr-2">🌾</span>
+            {safeT('dashboard.parcels.yield', 'Agricultural yield')}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="text-center">
+              <p className="text-sm text-gray-500">{safeT('deliveries.banners.totalDeliveries', 'Total deliveries')}</p>
+              <p className="text-3xl font-bold text-indigo-600">{stats.totalLivraisons}</p>
             </div>
             <div className="text-center">
-              <p className="text-xs font-semibold text-orange-100 uppercase tracking-wide">HUMID. MOY. (%)</p>
-              <p className="text-2xl font-bold">{stats.moyenneHumidite.toFixed(1)}</p>
+              <p className="text-sm text-gray-500">{safeT('deliveries.banners.totalWeight', 'Total dry weight')}</p>
+              <p className="text-3xl font-bold text-green-600">{(stats.totalEntrees / 1000).toFixed(1)} t</p>
             </div>
             <div className="text-center">
-              <p className="text-xs font-semibold text-orange-100 uppercase tracking-wide">REND. MOY. (t/ha)</p>
-              <p className="text-2xl font-bold">{formatRendement(stats.moyenneRendement)}</p>
+              <p className="text-sm text-gray-500">{safeT('deliveries.banners.averageYield', 'Average yield')}</p>
+              <p className="text-3xl font-bold text-yellow-600">{formatRendement(stats.moyenneRendement)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-500">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</p>
+              <p className="text-3xl font-bold text-purple-600">{stats.moyenneHumidite.toFixed(1)}%</p>
             </div>
           </div>
         </div>
@@ -410,16 +633,16 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
               <table className="min-w-full">
                 <thead className="bg-blue-600 text-white">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">📅 Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">📅 {safeT('deliveries.table.date', 'Date')}</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">🆔 ID Local</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">🌾 Parcelle</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">🌾 Produit</th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">📏 Poids Sec (kg)</th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">⚖️ Poids Brut (kg)</th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">💧 Humidité (%)</th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">⚡ Rendement (t/ha)</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">🚛 Chauffeur</th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">🔄 Type</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">🌾 {safeT('deliveries.table.parcel', 'Parcel')}</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">🌾 {safeT('deliveries.table.product', 'Product')}</th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">📏 {safeT('deliveries.table.dryWeight', 'Dry weight')}</th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">⚖️ {safeT('deliveries.table.grossWeight', 'Gross weight')}</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">💧 {safeT('deliveries.table.humidity', 'Humidity')} (%)</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">⚡ {safeT('deliveries.table.yield', 'Yield')} (t/ha)</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">🚛 {safeT('deliveries.table.driver', 'Driver')}</th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider">🔄 {safeT('deliveries.table.operation', 'Type')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -440,10 +663,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                           {livraison.local_id || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {livraison.parcelle || 'Autres'}
+                          {livraison.parcelle === 'Autres' ? safeT('common.other', 'Other') : (livraison.parcelle || safeT('common.other', 'Other'))}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {getProductName(livraison.produit_local_id)}
+                          {getProductName(livraison.produit_local_id, safeT)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-right text-green-600">
                           {(livraison.poids_sec || 0).toLocaleString()}
@@ -455,7 +678,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                           {livraison.humidite ? livraison.humidite.toFixed(1) : '0.0'}%
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-center text-purple-600">
-                          {formatRendement(calculateRendement(livraison.poids_sec || 0, livraison.parcelle || 'Autres'))}
+                          {formatRendement(calculateRendement(livraison.poids_sec || 0, livraison.parcelle || safeT('common.other', 'Other')))}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {livraison.chauffeur || 'N/A'}
@@ -466,7 +689,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {livraison.type_operation === 'entree' ? '📥 Entrée' : '📤 Sortie'}
+                            {livraison.type_operation === 'entree' ? '📥 ' + safeT('deliveries.operations.entree', 'Entry') : '📤 ' + safeT('deliveries.operations.sortie', 'Exit')}
                           </span>
                         </td>
                       </tr>
@@ -478,22 +701,22 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
             {livraisons.length === 0 && !loading && (
               <div className="p-8 text-center text-gray-500">
-                Aucune livraison ne correspond à vos critères de recherche.
+                {safeT('deliveries.noDeliveriesFound', 'No deliveries match your search criteria.')}
               </div>
             )}
             {loading && (
               <div className="p-8 text-center text-gray-500">
                 <div className="flex items-center justify-center space-x-2">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span>Chargement...</span>
+                  <span>{safeT('common.loading', 'Loading...')}</span>
                 </div>
               </div>
             )}
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune livraison</h3>
-            <p className="text-gray-600">Aucune livraison trouvée pour votre compte.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{safeT('deliveries.noDeliveries', 'No deliveries')}</h3>
+            <p className="text-gray-600">{safeT('deliveries.noDeliveriesForAccount', 'No deliveries found for your account.')}</p>
           </div>
         )}
 
@@ -501,26 +724,30 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         {Object.keys(statsParcelle).length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div className="px-6 py-4 border-b border-gray-200 bg-blue-600 text-white">
-              <h3 className="text-lg font-semibold">📊 Analyse par Parcelle</h3>
-              <p className="text-blue-100 text-sm">Répartition des données par parcelle</p>
+              <h3 className="text-lg font-semibold">📊 {safeT('deliveries.summary.parcelAnalysis', 'Analysis by parcel')}</h3>
+              <p className="text-blue-100 text-sm">{safeT('deliveries.summary.dataDistributionByParcel', 'Data distribution by parcel')}</p>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">🌾 Parcelle</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">📦 Livraisons</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">📏 Poids Sec (kg)</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">⚖️ Poids Brut (kg)</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">⚡ Rendement (t/ha)</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">💧 Humidité (%)</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">🌾 {safeT('deliveries.table.parcel', 'Parcel')}</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">📐 {safeT('dashboard.parcels.surface', 'Surface')} (ha)</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">📦 {safeT('deliveries.banners.totalDeliveries', 'Deliveries')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">📏 {safeT('deliveries.table.dryWeight', 'Dry weight')} (kg)</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">⚖️ {safeT('deliveries.table.grossWeight', 'Gross weight')} (kg)</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">⚡ {safeT('deliveries.table.yield', 'Yield')} (t/ha)</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">💧 {safeT('deliveries.table.humidity', 'Humidity')} (%)</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {Object.entries(statsParcelle).map(([parcelle, stats], index) => (
                     <tr key={parcelle} className={`hover:bg-blue-50 ${index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {parcelle}
+                        {parcelle === 'Autres' ? safeT('common.other', 'Other') : parcelle}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-orange-600">
+                        {parcelles[parcelle]?.surface_hectares ? parcelles[parcelle].surface_hectares.toFixed(1) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-blue-600">
                         {stats.livraisons}
@@ -548,64 +775,25 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         {/* Advanced D3.js Charts Section */}
         {livraisons.length > 0 && (
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">📈 Analyses graphiques avancées</h3>
-            <D3Charts livraisons={livraisons} />
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">📈 {safeT('dashboard.charts.title')}</h3>
+            <D3Charts
+              livraisons={livraisons}
+              parcelles={Object.entries(parcelles).map(([nom_parcelle, data]) => ({
+                id: 0, // Not used in D3Charts
+                local_id: 0, // Not used in D3Charts
+                client_local_id: client.local_id,
+                nom_parcelle,
+                surface_hectares: data.surface_hectares || 0,
+                last_modified: '', // Not used in D3Charts
+                created_at: '' // Not used in D3Charts
+              }))}
+              t={safeT}
+            />
           </div>
         )}
 
-        {/* Quick Navigation */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link
-            href="/dashboard"
-            className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-6 flex items-center space-x-3 transition-colors"
-          >
-            <div className="bg-blue-100 p-3 rounded-full">
-              <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Tableau de bord</h3>
-              <p className="text-sm text-gray-500">Vue d'ensemble</p>
-            </div>
-          </Link>
-
-          <button
-            onClick={() => {
-              setParcelleFilter('')
-              setTypeFilter('')
-              setSearchTerm('')
-              const today = new Date()
-              const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
-              setDateDebut(thirtyDaysAgo.toISOString().split('T')[0])
-              setDateFin(today.toISOString().split('T')[0])
-            }}
-            className="bg-white hover:bg-gray-50 border border-gray-200 rounded-lg p-6 flex items-center space-x-3 transition-colors"
-          >
-            <div className="bg-gray-100 p-3 rounded-full">
-              <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Réinitialiser</h3>
-              <p className="text-sm text-gray-500">Effacer les filtres</p>
-            </div>
-          </button>
-
-          <div className="bg-white border border-gray-200 rounded-lg p-6 flex items-center space-x-3">
-            <div className="bg-green-100 p-3 rounded-full">
-              <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm3 1h6v4H7V5zm8 8v2a1 1 0 01-1 1H6a1 1 0 01-1-1v-2h8z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Exporter Excel</h3>
-              <p className="text-sm text-gray-500">Bientôt disponible</p>
-            </div>
-          </div>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
