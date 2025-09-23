@@ -14,8 +14,8 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
   // Safe translation function with fallback
   const safeT = (key: string, fallback?: string): string => {
     try {
-      const result = t(key, fallback)
-      return result
+      const result = t(key)
+      return result || fallback || key
     } catch (error) {
       return fallback || key
     }
@@ -113,7 +113,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
         
         livraisonsWithHumidite.forEach(liv => {
           const weight = liv.poids_brut || 0
-          totalWeightedHumidite += liv.humidite * weight
+          totalWeightedHumidite += (liv.humidite || 0) * weight
           totalWeightForHumidite += weight
         })
         

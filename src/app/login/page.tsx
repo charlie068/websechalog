@@ -131,7 +131,7 @@ export default function LoginPage() {
                 Pas encore de compte ?
               </p>
               <p className="text-xs text-gray-700">
-                Contactez votre administrateur SechaLog pour créer un compte via l'application Desktop.
+                Contactez votre administrateur SechaLog pour créer un compte via l&apos;application Desktop.
               </p>
             </div>
           </div>

@@ -99,11 +99,8 @@ export default function LivraisonsTable({ livraisons }: LivraisonsTableProps) {
               >
                 Date {sortField === 'date_pesee' && (sortDirection === 'desc' ? '↓' : '↑')}
               </th>
-              <th 
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('numero_bl')}
-              >
-                N° BL {sortField === 'numero_bl' && (sortDirection === 'desc' ? '↓' : '↑')}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                ID
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Parcelle
@@ -144,10 +141,10 @@ export default function LivraisonsTable({ livraisons }: LivraisonsTableProps) {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {livraison.numero_bl || 'N/A'}
+                  {livraison.local_id}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {livraison.nom_parcelle || 'N/A'}
+                  {livraison.parcelle || 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {livraison.poids_sec?.toFixed(0) || 0} kg

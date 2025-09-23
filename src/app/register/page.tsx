@@ -17,12 +17,12 @@ export default function RegisterPage() {
           </h2>
           <div className="mt-4 p-6 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-gray-700 mb-4">
-              L'inscription de nouveaux comptes doit être effectuée via l'application SechaLog Desktop.
+              L'inscription de nouveaux comptes doit être effectuée via l&apos;application SechaLog Desktop.
             </p>
             <div className="text-left space-y-2">
               <p className="text-sm font-medium text-gray-900">Pour créer un compte :</p>
               <ol className="list-decimal list-inside text-sm text-gray-700 space-y-1">
-                <li>Ouvrez l'application SechaLog Desktop</li>
+                <li>Ouvrez l&apos;application SechaLog Desktop</li>
                 <li>Contactez votre administrateur pour créer votre compte</li>
                 <li>Une fois créé, utilisez vos identifiants pour vous connecter ici</li>
               </ol>

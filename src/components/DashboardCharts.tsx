@@ -37,7 +37,7 @@ export default function DashboardCharts({ livraisons, t }: DashboardChartsProps)
   // Prepare data for charts
   const prepareParcelleData = () => {
     const parcelleStats = livraisons.reduce((acc, liv) => {
-      const parcelle = liv.nom_parcelle || (t ? t('common.other', 'Other') : 'Other')
+      const parcelle = liv.parcelle || (t ? t('common.other', 'Other') : 'Other')
       if (!acc[parcelle]) {
         acc[parcelle] = { 
           poidsSec: 0, 

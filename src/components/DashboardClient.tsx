@@ -55,7 +55,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
     // Clear any bad July cookies immediately
     if (savedDateDebut && savedDateDebut.includes('-07-')) {
       Cookies.remove('dashboard_date_debut')
-      savedDateDebut = null // Force recalculation
+      savedDateDebut = undefined // Force recalculation
     }
     
     const today = new Date()
@@ -678,7 +678,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
                 dateFormat="dd/MM/yyyy"
                 placeholderText={safeT('common.selectDate', 'Select a date')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                minDate={dateDebut}
+                minDate={dateDebut || undefined}
                 maxDate={new Date()}
                 calendarStartDay={1}
               />
