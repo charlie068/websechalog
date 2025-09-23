@@ -547,13 +547,15 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
           .attr('stroke', '#000')
           .attr('y2', 6)
         
-        // Add text label
+        // Add text label with 45-degree rotation
         tick.append('text')
           .attr('fill', '#000')
           .attr('y', 9)
           .attr('dy', '0.71em')
-          .style('text-anchor', 'middle')
+          .style('text-anchor', 'end')
           .style('font-size', '12px')
+          .attr('dx', '-.8em')
+          .attr('transform', 'rotate(-45)')
           .text(d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }))
       })
     
