@@ -210,7 +210,16 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
       pdf.setFontSize(14)
       pdf.text(`Client: ${client.nom_client}`, pageWidth / 2, 60, { align: 'center' })
       pdf.setFontSize(12)
-      pdf.text(`Période: ${dateDebut || 'N/A'} - ${dateFin || 'N/A'}`, pageWidth / 2, 70, { align: 'center' })
+      const formatDateForPDF = (date: Date | null) => {
+        if (!date) return 'N/A'
+        return date.toLocaleDateString('fr-FR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+      }
+
+      pdf.text(`Période: ${formatDateForPDF(dateDebut)} - ${formatDateForPDF(dateFin)}`, pageWidth / 2, 70, { align: 'center' })
       
       yPosition = 90
 
@@ -269,10 +278,16 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
       
       yPosition += 60
 
-      // Try to capture charts with simplified approach
-      
-      const chartElements = document.querySelectorAll('svg')
-      
+      // Try to capture charts with improved filtering
+
+      // Only select actual chart SVGs (filter out icons and small graphics)
+      const allSvgs = document.querySelectorAll('svg') as NodeListOf<SVGElement>
+      const chartElements = Array.from(allSvgs).filter(svg => {
+        const bbox = svg.getBoundingClientRect()
+        // Only include SVGs that are large enough to be charts (width > 200px, height > 150px)
+        return bbox.width > 200 && bbox.height > 150 && svg.parentElement && !svg.closest('button, .lucide')
+      })
+
       if (chartElements.length > 0) {
         // Add new page for charts
         pdf.addPage()
@@ -287,17 +302,26 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
         for (let i = 0; i < chartElements.length; i++) {
           const chartElement = chartElements[i]
           try {
-            const bbox = (chartElement as any).getBoundingClientRect?.()
-            
-            // Try direct SVG to canvas conversion (avoid html2canvas for SVG)
-            const svgElement = chartElement as SVGElement
+            const bbox = chartElement.getBoundingClientRect()
+
+            // Create a clean copy of the SVG
+            const svgElement = chartElement.cloneNode(true) as SVGElement
+
+            // Remove potentially problematic elements that might render as marks
+            const problematicElements = svgElement.querySelectorAll(
+              '.tick line[stroke-width="1"], .domain, line[stroke="currentColor"], .lucide'
+            )
+            problematicElements.forEach(el => el.remove())
+
             const svgData = new XMLSerializer().serializeToString(svgElement)
-            
-            // Create a canvas element for manual conversion
+
+            // Create high-resolution canvas element for better quality
+            const scale = 4 // 4x scale for crisp rendering
             const tempCanvas = document.createElement('canvas')
             const ctx = tempCanvas.getContext('2d')!
-            tempCanvas.width = 600
-            tempCanvas.height = 400
+            tempCanvas.width = 600 * scale
+            tempCanvas.height = 400 * scale
+            ctx.scale(scale, scale)
             
             // Create an image from SVG data
             const img = new Image()
@@ -307,12 +331,12 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
             const imageLoadPromise = new Promise<HTMLCanvasElement>((resolve, reject) => {
               img.onload = () => {
                 try {
-                  // Fill white background
+                  // Fill white background (use logical dimensions, not scaled)
                   ctx.fillStyle = '#ffffff'
-                  ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
-                  
-                  // Draw the SVG image
-                  ctx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height)
+                  ctx.fillRect(0, 0, 600, 400)
+
+                  // Draw the SVG image at logical size (scaling handled by context)
+                  ctx.drawImage(img, 0, 0, 600, 400)
                   
                   URL.revokeObjectURL(url)
                   resolve(tempCanvas)
