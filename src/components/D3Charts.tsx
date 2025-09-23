@@ -248,6 +248,17 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       .call(d3.axisLeft(y).tickFormat(d => `${d}t`))
       .style('font-size', '11px')
 
+    // Y-axis title
+    g.append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', -55)
+      .attr('x', -height / 2)
+      .attr('dy', '1em')
+      .style('text-anchor', 'middle')
+      .style('font-size', '12px')
+      .style('font-weight', 'bold')
+      .text(safeT('dashboard.charts.axisLabels.production', 'Production (tonnes)'))
+
     // Title
     svg.append('text')
       .attr('x', width / 2 + margin.left)
