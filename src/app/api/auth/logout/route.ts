@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-export async function POST() {
+async function handleLogout() {
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
@@ -22,9 +22,16 @@ export async function POST() {
       },
     }
   )
-  
+
   await supabase.auth.signOut()
-  
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || 'http://localhost:3000'
-  return NextResponse.redirect(new URL('/login', siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`))
+
+  return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_SITE_URL || 'https://websechalog-fwmb0yd0h-jean-charles-isners-projects.vercel.app'))
+}
+
+export async function POST() {
+  return handleLogout()
+}
+
+export async function GET() {
+  return handleLogout()
 }
