@@ -553,7 +553,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
           .attr('y', 9)
           .attr('dy', '0.71em')
           .style('text-anchor', 'end')
-          .style('font-size', '12px')
+          .style('font-size', '10px')
           .attr('dx', '-.8em')
           .attr('transform', 'rotate(-45)')
           .text(d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }))
