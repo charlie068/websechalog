@@ -47,7 +47,7 @@ export default function ResponsiveLayout({
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 w-full overflow-x-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -57,8 +57,8 @@ export default function ResponsiveLayout({
       )}
 
       {/* Top Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white sticky top-0 z-30">
-        <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-6">
+      <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white sticky top-0 z-30 w-full">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-6 w-full">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               {/* Mobile menu button */}
@@ -98,8 +98,8 @@ export default function ResponsiveLayout({
         </div>
 
         {/* Navigation Tabs - Visible on all screen sizes */}
-        <div className="border-t border-blue-400/30">
-          <div className="px-4 lg:px-8 py-2">
+        <div className="border-t border-blue-400/30 w-full">
+          <div className="px-4 lg:px-8 py-2 w-full">
             <nav className="flex space-x-2 lg:space-x-4 overflow-x-auto">
               {navigationItems.map((item) => (
                 currentPage === item.key ? (
@@ -126,9 +126,9 @@ export default function ResponsiveLayout({
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex w-full">
         {/* Desktop Sidebar */}
-        <div className="hidden lg:block w-64 bg-white shadow-sm min-h-screen">
+        <div className="hidden lg:block w-64 bg-white shadow-sm min-h-screen flex-shrink-0">
           {sidebarContent}
         </div>
 
@@ -154,7 +154,7 @@ export default function ResponsiveLayout({
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 lg:p-6 p-4">
+        <div className="flex-1 lg:p-6 p-4 w-full min-w-0">
           {children}
         </div>
       </div>
