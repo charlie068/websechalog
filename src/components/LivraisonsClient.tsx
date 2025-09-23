@@ -855,6 +855,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
             />
           </div>
         )}
+      </div>
     </ResponsiveLayout>
   )
 }
