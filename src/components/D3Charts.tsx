@@ -599,86 +599,171 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
         .text(safeT('deliveries.table.humidity') + ' (%)')
     }
 
-    // Add legend at the bottom (horizontal layout)
+    // Add legend at the bottom (responsive layout)
     const legend = svg.append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top + height + 60})`)
+      .attr('transform', `translate(${margin.left}, ${margin.top + height + 45})`)
 
-    // Horizontal legend layout
-    let legendX = 0
-    const itemSpacing = Math.min(180, width / 4) // Responsive spacing based on width
+    // Determine layout based on available width
+    const totalItems = hasHumidite ? 4 : 3
+    const itemWidth = 160 // Minimum width needed per item
+    const useVerticalLayout = width < (totalItems * itemWidth)
 
-    // Cumulative Entries
-    legend.append('line')
-      .attr('x1', legendX)
-      .attr('x2', legendX + 20)
-      .attr('y1', 0)
-      .attr('y2', 0)
-      .attr('stroke', '#22C55E')
-      .attr('stroke-width', 2)
+    if (useVerticalLayout) {
+      // Vertical layout for narrow screens
+      let legendY = 0
+      const lineHeight = 18
 
-    legend.append('text')
-      .attr('x', legendX + 25)
-      .attr('y', 0)
-      .attr('dy', '0.35em')
-      .style('font-size', '12px')
-      .text(safeT('dashboard.charts.axisLabels.cumulativeEntries', 'Cumulative Entries'))
+      // Cumulative Entries
+      legend.append('line')
+        .attr('x1', 0)
+        .attr('x2', 20)
+        .attr('y1', legendY)
+        .attr('y2', legendY)
+        .attr('stroke', '#22C55E')
+        .attr('stroke-width', 2)
 
-    legendX += itemSpacing
+      legend.append('text')
+        .attr('x', 25)
+        .attr('y', legendY)
+        .attr('dy', '0.35em')
+        .style('font-size', '12px')
+        .text(safeT('dashboard.charts.axisLabels.cumulativeEntries', 'Cumulative Entries'))
 
-    // Cumulative Exits
-    legend.append('line')
-      .attr('x1', legendX)
-      .attr('x2', legendX + 20)
-      .attr('y1', 0)
-      .attr('y2', 0)
-      .attr('stroke', '#EF4444')
-      .attr('stroke-width', 2)
+      legendY += lineHeight
 
-    legend.append('text')
-      .attr('x', legendX + 25)
-      .attr('y', 0)
-      .attr('dy', '0.35em')
-      .style('font-size', '12px')
-      .text(safeT('dashboard.charts.axisLabels.cumulativeExits', 'Cumulative Exits'))
+      // Cumulative Exits
+      legend.append('line')
+        .attr('x1', 0)
+        .attr('x2', 20)
+        .attr('y1', legendY)
+        .attr('y2', legendY)
+        .attr('stroke', '#EF4444')
+        .attr('stroke-width', 2)
 
-    legendX += itemSpacing
+      legend.append('text')
+        .attr('x', 25)
+        .attr('y', legendY)
+        .attr('dy', '0.35em')
+        .style('font-size', '12px')
+        .text(safeT('dashboard.charts.axisLabels.cumulativeExits', 'Cumulative Exits'))
 
-    // Net Stock
-    legend.append('rect')
-      .attr('x', legendX)
-      .attr('y', -5)
-      .attr('width', 20)
-      .attr('height', 10)
-      .attr('fill', '#3B82F6')
-      .attr('fill-opacity', 0.2)
-      .attr('stroke', 'none')
+      legendY += lineHeight
 
-    legend.append('text')
-      .attr('x', legendX + 25)
-      .attr('y', 0)
-      .attr('dy', '0.35em')
-      .style('font-size', '12px')
-      .text(safeT('dashboard.charts.axisLabels.netStock', 'Net Stock'))
+      // Net Stock
+      legend.append('rect')
+        .attr('x', 0)
+        .attr('y', legendY - 5)
+        .attr('width', 20)
+        .attr('height', 10)
+        .attr('fill', '#3B82F6')
+        .attr('fill-opacity', 0.2)
+        .attr('stroke', 'none')
 
-    // Add humidity line to legend (only if we have humidity data)
-    if (hasHumidite) {
-      legendX += itemSpacing
+      legend.append('text')
+        .attr('x', 25)
+        .attr('y', legendY)
+        .attr('dy', '0.35em')
+        .style('font-size', '12px')
+        .text(safeT('dashboard.charts.axisLabels.netStock', 'Net Stock'))
 
+      // Add humidity line to legend (only if we have humidity data)
+      if (hasHumidite) {
+        legendY += lineHeight
+
+        legend.append('line')
+          .attr('x1', 0)
+          .attr('x2', 20)
+          .attr('y1', legendY)
+          .attr('y2', legendY)
+          .attr('stroke', '#F97316')
+          .attr('stroke-width', 2)
+          .attr('stroke-dasharray', '3,3')
+
+        legend.append('text')
+          .attr('x', 25)
+          .attr('y', legendY)
+          .attr('dy', '0.35em')
+          .style('font-size', '12px')
+          .text(safeT('deliveries.table.humidity') + ' (%)')
+      }
+    } else {
+      // Horizontal layout for wider screens
+      let legendX = 0
+      const itemSpacing = width / totalItems
+
+      // Cumulative Entries
       legend.append('line')
         .attr('x1', legendX)
         .attr('x2', legendX + 20)
         .attr('y1', 0)
         .attr('y2', 0)
-        .attr('stroke', '#F97316')
+        .attr('stroke', '#22C55E')
         .attr('stroke-width', 2)
-        .attr('stroke-dasharray', '3,3')
 
       legend.append('text')
         .attr('x', legendX + 25)
         .attr('y', 0)
         .attr('dy', '0.35em')
         .style('font-size', '12px')
-        .text(safeT('deliveries.table.humidity') + ' (%)')
+        .text(safeT('dashboard.charts.axisLabels.cumulativeEntries', 'Cumulative Entries'))
+
+      legendX += itemSpacing
+
+      // Cumulative Exits
+      legend.append('line')
+        .attr('x1', legendX)
+        .attr('x2', legendX + 20)
+        .attr('y1', 0)
+        .attr('y2', 0)
+        .attr('stroke', '#EF4444')
+        .attr('stroke-width', 2)
+
+      legend.append('text')
+        .attr('x', legendX + 25)
+        .attr('y', 0)
+        .attr('dy', '0.35em')
+        .style('font-size', '12px')
+        .text(safeT('dashboard.charts.axisLabels.cumulativeExits', 'Cumulative Exits'))
+
+      legendX += itemSpacing
+
+      // Net Stock
+      legend.append('rect')
+        .attr('x', legendX)
+        .attr('y', -5)
+        .attr('width', 20)
+        .attr('height', 10)
+        .attr('fill', '#3B82F6')
+        .attr('fill-opacity', 0.2)
+        .attr('stroke', 'none')
+
+      legend.append('text')
+        .attr('x', legendX + 25)
+        .attr('y', 0)
+        .attr('dy', '0.35em')
+        .style('font-size', '12px')
+        .text(safeT('dashboard.charts.axisLabels.netStock', 'Net Stock'))
+
+      // Add humidity line to legend (only if we have humidity data)
+      if (hasHumidite) {
+        legendX += itemSpacing
+
+        legend.append('line')
+          .attr('x1', legendX)
+          .attr('x2', legendX + 20)
+          .attr('y1', 0)
+          .attr('y2', 0)
+          .attr('stroke', '#F97316')
+          .attr('stroke-width', 2)
+          .attr('stroke-dasharray', '3,3')
+
+        legend.append('text')
+          .attr('x', legendX + 25)
+          .attr('y', 0)
+          .attr('dy', '0.35em')
+          .style('font-size', '12px')
+          .text(safeT('deliveries.table.humidity') + ' (%)')
+      }
     }
 
     // Add title
