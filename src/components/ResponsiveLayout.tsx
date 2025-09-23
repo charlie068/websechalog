@@ -93,15 +93,15 @@ export default function ResponsiveLayout({
           </div>
         </div>
 
-        {/* Mobile Navigation - Horizontal scroll */}
-        <div className="lg:hidden border-t border-green-500/30">
-          <div className="px-4 py-2">
-            <nav className="flex space-x-4 overflow-x-auto">
+        {/* Navigation Tabs - Visible on all screen sizes */}
+        <div className="border-t border-green-500/30">
+          <div className="px-4 lg:px-8 py-2">
+            <nav className="flex space-x-2 lg:space-x-4 overflow-x-auto">
               {navigationItems.map((item) => (
                 currentPage === item.key ? (
                   <div
                     key={item.key}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg bg-white/20 text-white font-medium text-sm whitespace-nowrap`}
+                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 rounded-lg bg-white/20 text-white font-medium text-sm lg:text-base whitespace-nowrap"
                   >
                     <span>{item.icon}</span>
                     <span>{item.label}</span>
@@ -110,7 +110,7 @@ export default function ResponsiveLayout({
                   <Link
                     key={item.key}
                     href={item.href}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-green-100 hover:bg-white/10 font-medium text-sm transition-colors whitespace-nowrap"
+                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 rounded-lg text-green-100 hover:bg-white/10 font-medium text-sm lg:text-base transition-colors whitespace-nowrap"
                   >
                     <span>{item.icon}</span>
                     <span>{item.label}</span>
