@@ -267,7 +267,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     const svg = d3.select(lineChartRef.current)
     svg.selectAll("*").remove()
 
-    const margin = { top: 20, right: 30, bottom: 90, left: 80 }
+    const margin = { top: 20, right: 80, bottom: 90, left: 80 }
     const width = chartDimensions.lineChart.width - margin.left - margin.right
     const height = chartDimensions.lineChart.height - margin.bottom - margin.top
 
