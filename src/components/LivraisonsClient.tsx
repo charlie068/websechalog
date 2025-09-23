@@ -648,18 +648,18 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
             <span className="mr-2">⚖️</span>
             {safeT('deliveries.summary.entryExitBalance', 'Entry/Exit Balance')}
           </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <div className="text-center">
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📥 {safeT('deliveries.banners.totalEntries', 'ENTRIES')} (kg)</p>
-              <p className="text-2xl font-bold text-green-600">{stats.totalEntrees.toLocaleString()}</p>
+              <p className="text-xl lg:text-2xl font-bold text-green-600">{stats.totalEntrees.toLocaleString()}</p>
             </div>
             <div className="text-center">
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📤 {safeT('deliveries.banners.totalExits', 'EXITS')} (kg)</p>
-              <p className="text-2xl font-bold text-red-600">{stats.totalSorties.toLocaleString()}</p>
+              <p className="text-xl lg:text-2xl font-bold text-red-600">{stats.totalSorties.toLocaleString()}</p>
             </div>
             <div className="text-center">
               <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">⚖️ {safeT('deliveries.banners.netBalance', 'BALANCE')} (kg)</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.balance.toLocaleString()}</p>
+              <p className="text-xl lg:text-2xl font-bold text-blue-600">{stats.balance.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -670,22 +670,22 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
             <span className="mr-2">🌾</span>
             {safeT('dashboard.parcels.yield', 'Agricultural yield')}
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6">
             <div className="text-center">
               <p className="text-sm text-gray-500">{safeT('deliveries.banners.totalDeliveries', 'Total deliveries')}</p>
-              <p className="text-3xl font-bold text-indigo-600">{stats.totalLivraisons}</p>
+              <p className="text-2xl lg:text-3xl font-bold text-indigo-600">{stats.totalLivraisons}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">{safeT('deliveries.banners.totalWeight', 'Total dry weight')}</p>
-              <p className="text-3xl font-bold text-green-600">{(stats.totalEntrees / 1000).toFixed(1)} t</p>
+              <p className="text-2xl lg:text-3xl font-bold text-green-600">{(stats.totalEntrees / 1000).toFixed(1)} t</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">{safeT('deliveries.banners.averageYield', 'Average yield')}</p>
-              <p className="text-3xl font-bold text-yellow-600">{formatRendement(stats.moyenneRendement, safeT)}</p>
+              <p className="text-2xl lg:text-3xl font-bold text-yellow-600">{formatRendement(stats.moyenneRendement, safeT)}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</p>
-              <p className="text-3xl font-bold text-purple-600">{stats.moyenneHumidite.toFixed(1)}%</p>
+              <p className="text-2xl lg:text-3xl font-bold text-purple-600">{stats.moyenneHumidite.toFixed(1)}%</p>
             </div>
           </div>
         </div>

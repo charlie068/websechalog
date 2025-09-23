@@ -48,22 +48,22 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
         const containerWidth = barContainer.offsetWidth - 48 // Account for padding
         const lineContainerWidth = lineContainer.offsetWidth - 48
 
-        const barWidth = Math.max(300, Math.min(containerWidth, 500))
-        const lineWidth = Math.max(400, Math.min(lineContainerWidth, 1000))
-        const rendementWidth = Math.max(300, Math.min(containerWidth, 500))
+        const barWidth = Math.max(280, Math.min(containerWidth, 500))
+        const lineWidth = Math.max(320, Math.min(lineContainerWidth, 1000))
+        const rendementWidth = Math.max(280, Math.min(containerWidth, 500))
 
         setChartDimensions({
           barChart: {
             width: barWidth,
-            height: Math.max(250, Math.min(barWidth * 0.7, 350)) // Better aspect ratio
+            height: Math.max(220, Math.min(barWidth * 0.7, 350)) // Better aspect ratio
           },
           lineChart: {
             width: lineWidth,
-            height: Math.max(300, Math.min(lineWidth * 0.5, 400)) // Less stretched
+            height: Math.max(250, Math.min(lineWidth * 0.5, 400)) // Less stretched
           },
           rendementChart: {
             width: rendementWidth,
-            height: Math.max(250, Math.min(rendementWidth * 0.7, 350)) // Better aspect ratio
+            height: Math.max(220, Math.min(rendementWidth * 0.7, 350)) // Better aspect ratio
           }
         })
       }
