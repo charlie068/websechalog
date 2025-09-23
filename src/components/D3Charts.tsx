@@ -267,7 +267,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     const svg = d3.select(lineChartRef.current)
     svg.selectAll("*").remove()
 
-    const margin = { top: 20, right: 30, bottom: 120, left: 80 }
+    const margin = { top: 20, right: 30, bottom: 90, left: 80 }
     const width = chartDimensions.lineChart.width - margin.left - margin.right
     const height = chartDimensions.lineChart.height - margin.bottom - margin.top
 
@@ -609,83 +609,76 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     const useVerticalLayout = width < (totalItems * itemWidth)
 
     if (useVerticalLayout) {
-      // Vertical layout for narrow screens
-      let legendY = 0
+      // Two-column layout for narrow screens
       const lineHeight = 18
+      const columnWidth = width / 2
+      const items = [
+        {
+          type: 'line',
+          stroke: '#22C55E',
+          text: safeT('dashboard.charts.axisLabels.cumulativeEntries', 'Cumulative Entries')
+        },
+        {
+          type: 'line',
+          stroke: '#EF4444',
+          text: safeT('dashboard.charts.axisLabels.cumulativeExits', 'Cumulative Exits')
+        },
+        {
+          type: 'rect',
+          fill: '#3B82F6',
+          text: safeT('dashboard.charts.axisLabels.netStock', 'Net Stock')
+        }
+      ]
 
-      // Cumulative Entries
-      legend.append('line')
-        .attr('x1', 0)
-        .attr('x2', 20)
-        .attr('y1', legendY)
-        .attr('y2', legendY)
-        .attr('stroke', '#22C55E')
-        .attr('stroke-width', 2)
-
-      legend.append('text')
-        .attr('x', 25)
-        .attr('y', legendY)
-        .attr('dy', '0.35em')
-        .style('font-size', '12px')
-        .text(safeT('dashboard.charts.axisLabels.cumulativeEntries', 'Cumulative Entries'))
-
-      legendY += lineHeight
-
-      // Cumulative Exits
-      legend.append('line')
-        .attr('x1', 0)
-        .attr('x2', 20)
-        .attr('y1', legendY)
-        .attr('y2', legendY)
-        .attr('stroke', '#EF4444')
-        .attr('stroke-width', 2)
-
-      legend.append('text')
-        .attr('x', 25)
-        .attr('y', legendY)
-        .attr('dy', '0.35em')
-        .style('font-size', '12px')
-        .text(safeT('dashboard.charts.axisLabels.cumulativeExits', 'Cumulative Exits'))
-
-      legendY += lineHeight
-
-      // Net Stock
-      legend.append('rect')
-        .attr('x', 0)
-        .attr('y', legendY - 5)
-        .attr('width', 20)
-        .attr('height', 10)
-        .attr('fill', '#3B82F6')
-        .attr('fill-opacity', 0.2)
-        .attr('stroke', 'none')
-
-      legend.append('text')
-        .attr('x', 25)
-        .attr('y', legendY)
-        .attr('dy', '0.35em')
-        .style('font-size', '12px')
-        .text(safeT('dashboard.charts.axisLabels.netStock', 'Net Stock'))
-
-      // Add humidity line to legend (only if we have humidity data)
       if (hasHumidite) {
-        legendY += lineHeight
-
-        legend.append('line')
-          .attr('x1', 0)
-          .attr('x2', 20)
-          .attr('y1', legendY)
-          .attr('y2', legendY)
-          .attr('stroke', '#F97316')
-          .attr('stroke-width', 2)
-          .attr('stroke-dasharray', '3,3')
-
-        legend.append('text')
-          .attr('x', 25)
-          .attr('y', legendY)
-          .attr('dy', '0.35em')
-          .style('font-size', '12px')
-          .text(safeT('deliveries.table.humidity') + ' (%)')
+        items.push({
+          type: 'line',
+          stroke: '#F97316',
+          text: safeT('deliveries.table.humidity') + ' (%)',
+          dashed: true
+        })
       }
+
+      items.forEach((item, index) => {
+        const col = index % 2
+        const row = Math.floor(index / 2)
+        const x = col * columnWidth
+        const y = row * lineHeight
+
+        if (item.type === 'line') {
+          legend.append('line')
+            .attr('x1', x)
+            .attr('x2', x + 20)
+            .attr('y1', y)
+            .attr('y2', y)
+            .attr('stroke', item.stroke)
+            .attr('stroke-width', 2)
+            .attr('stroke-dasharray', item.dashed ? '3,3' : 'none')
+
+          legend.append('text')
+            .attr('x', x + 25)
+            .attr('y', y)
+            .attr('dy', '0.35em')
+            .style('font-size', '12px')
+            .text(item.text)
+        } else if (item.type === 'rect') {
+          legend.append('rect')
+            .attr('x', x)
+            .attr('y', y - 5)
+            .attr('width', 20)
+            .attr('height', 10)
+            .attr('fill', item.fill)
+            .attr('fill-opacity', 0.2)
+            .attr('stroke', 'none')
+
+          legend.append('text')
+            .attr('x', x + 25)
+            .attr('y', y)
+            .attr('dy', '0.35em')
+            .style('font-size', '12px')
+            .text(item.text)
+        }
+      })
     } else {
       // Horizontal layout for wider screens
       let legendX = 0
