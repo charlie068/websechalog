@@ -20,7 +20,8 @@
     "phone": "Téléphone",
     "address": "Adresse",
     "selectDate": "Sélectionner une date",
-    "other": "Autre"
+    "other": "Autre",
+    "notAvailable": "Non disponible"
   },
   "navigation": {
     "dashboard": "Tableau de bord",
@@ -107,7 +108,8 @@
       "humidity": "Humidité",
       "hectares": "hectares",
       "tonnes": "tonnes",
-      "tonnesPerHectare": "t/ha"
+      "tonnesPerHectare": "t/ha",
+      "noSurfaceArea": "Pas de surface"
     }
   },
   "deliveries": {
@@ -185,7 +187,8 @@
       "totalDeliveries": "Total livraisons",
       "averageHumidity": "Humidité moyenne",
       "entryExitBalance": "Bilan entrées/sorties",
-      "parcelAnalysis": "Analyse par parcelle"
+      "parcelAnalysis": "Analyse par parcelle",
+      "dataDistributionByParcel": "Distribution des données par parcelle"
     }
   },
   "profile": {

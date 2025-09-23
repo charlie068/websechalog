@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "SechaLog Client Portal",
   description: "Accédez à vos données de pesée SechaLog",
+  icons: {
+    icon: "/sechalog_logo.ico",
+  },
 };
 
 export const viewport: Viewport = {

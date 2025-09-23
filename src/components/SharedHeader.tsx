@@ -18,7 +18,11 @@ export default function SharedHeader({ client, currentPage, safeT }: SharedHeade
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
-              <div className="text-3xl">🌾</div>
+              <img
+                src="/sechalog_logo.png"
+                alt="SechaLog Logo"
+                className="h-10 w-auto"
+              />
               <div>
                 <h1 className="text-2xl font-bold">SechaLog Portal</h1>
                 <p className="text-green-100">Client: {client.nom_client}</p>

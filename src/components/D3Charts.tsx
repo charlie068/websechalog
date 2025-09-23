@@ -32,9 +32,9 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
 
   // State for chart dimensions
   const [chartDimensions, setChartDimensions] = useState({
-    barChart: { width: 500, height: 300 },
-    lineChart: { width: 1000, height: 300 },
-    rendementChart: { width: 500, height: 300 }
+    barChart: { width: 500, height: 350 },
+    lineChart: { width: 1000, height: 400 },
+    rendementChart: { width: 500, height: 350 }
   })
 
   // Responsive resize effect
@@ -48,18 +48,22 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
         const containerWidth = barContainer.offsetWidth - 48 // Account for padding
         const lineContainerWidth = lineContainer.offsetWidth - 48
 
+        const barWidth = Math.max(300, Math.min(containerWidth, 500))
+        const lineWidth = Math.max(400, Math.min(lineContainerWidth, 1000))
+        const rendementWidth = Math.max(300, Math.min(containerWidth, 500))
+
         setChartDimensions({
           barChart: {
-            width: Math.max(300, Math.min(containerWidth, 500)),
-            height: 300
+            width: barWidth,
+            height: Math.max(250, Math.min(barWidth * 0.7, 350)) // Better aspect ratio
           },
           lineChart: {
-            width: Math.max(400, Math.min(lineContainerWidth, 1200)),
-            height: 300
+            width: lineWidth,
+            height: Math.max(300, Math.min(lineWidth * 0.5, 400)) // Less stretched
           },
           rendementChart: {
-            width: Math.max(300, Math.min(containerWidth, 500)),
-            height: 300
+            width: rendementWidth,
+            height: Math.max(250, Math.min(rendementWidth * 0.7, 350)) // Better aspect ratio
           }
         })
       }

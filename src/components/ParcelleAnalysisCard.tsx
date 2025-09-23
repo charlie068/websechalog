@@ -57,16 +57,22 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
 
         if (livraisons) {
           const totalLivraisons = livraisons.length
-          
+
           // If no livraisons in the date range, don't show the card
           if (totalLivraisons === 0) {
             setStats(null)
             setIsLoading(false)
             return
           }
-          
+
+          // Filter for entry operations only (for yield calculation)
+          const entreeLivraisons = livraisons.filter((liv: any) => liv.type_operation === 'entree')
+
           const totalPoidsSec = livraisons.reduce((sum: number, liv: any) => sum + (liv.poids_sec || 0), 0)
           const totalPoidsBrut = livraisons.reduce((sum: number, liv: any) => sum + (liv.poids_brut || 0), 0)
+
+          // For yield calculation, use only entry operations
+          const totalPoidsSecEntrees = entreeLivraisons.reduce((sum: number, liv: any) => sum + (liv.poids_sec || 0), 0)
           
           const derniereLivraison = livraisons.length > 0 
             ? livraisons.sort((a: any, b: any) => new Date(b.date_pesee).getTime() - new Date(a.date_pesee).getTime())[0].date_pesee
@@ -90,11 +96,14 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
             ? totalWeightedHumidite / totalWeightForHumidite 
             : 0
 
-          // Calculate rendement (yield per hectare)
-          const totalPoidsSecTonnes = totalPoidsSec / 1000 // Convert to tonnes
-          const rendement = (parcelle.surface_hectares > 0 && totalPoidsSec > 0 && totalLivraisons > 0) 
-            ? totalPoidsSecTonnes / parcelle.surface_hectares 
+          // Calculate rendement (yield per hectare) - use only entry operations
+          const totalPoidsSecTonnesEntrees = totalPoidsSecEntrees / 1000 // Convert to tonnes
+          // Check if surface area is available for yield calculation
+          const hasSurfaceArea = parcelle.surface_hectares !== null && parcelle.surface_hectares !== undefined && parcelle.surface_hectares > 0
+          const rendement = (hasSurfaceArea && totalPoidsSecEntrees > 0 && entreeLivraisons.length > 0)
+            ? totalPoidsSecTonnesEntrees / parcelle.surface_hectares
             : null
+
 
           setStats({
             totalLivraisons,
@@ -133,10 +142,10 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
 
   return (
     <div className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200">
-      <div className="p-6">
+      <div className="p-4">
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-lg font-medium text-gray-900">
-            🌾 {parcelle.nom_parcelle}
+            🌾 {parcelle.nom_parcelle === 'Autres' ? safeT('common.other', 'Other') : parcelle.nom_parcelle}
           </h3>
           <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {parcelle.surface_hectares} ha
@@ -178,7 +187,10 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
           {/* Rendement section */}
           <div className="bg-orange-50 rounded p-3 text-center">
             <div className="text-2xl font-bold text-orange-600">
-              {stats.rendement !== null ? `${stats.rendement.toFixed(2)} t/ha` : 'ND'}
+              {stats.rendement !== null ? `${stats.rendement.toFixed(2)} t/ha` :
+                parcelle.surface_hectares === null || parcelle.surface_hectares === undefined || parcelle.surface_hectares === 0
+                  ? safeT('dashboard.parcels.noSurfaceArea', 'No surface area')
+                  : safeT('common.notAvailable', 'N/A')}
             </div>
             <div className="text-sm text-gray-600">🌾 {safeT('dashboard.parcels.yield', 'Yield')}</div>
           </div>

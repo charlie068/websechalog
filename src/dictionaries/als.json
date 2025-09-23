@@ -20,7 +20,8 @@
     "phone": "Telefon",
     "address": "Adress",
     "selectDate": "Datum uswähle",
-    "other": "Ander"
+    "other": "Ander",
+    "notAvailable": "Nit verfügbar"
   },
   "navigation": {
     "dashboard": "Üwerblick",
@@ -107,7 +108,8 @@
       "humidity": "Füechtigkeit",
       "hectares": "Hektar",
       "tonnes": "Tonne",
-      "tonnesPerHectare": "t/ha"
+      "tonnesPerHectare": "t/ha",
+      "noSurfaceArea": "Kei Flächi"
     }
   },
   "deliveries": {
@@ -185,7 +187,8 @@
       "totalDeliveries": "Gsamti Lieferunge",
       "averageHumidity": "Durchschnittlichi Füechtigkeit",
       "entryExitBalance": "I-/Usgangsbilanz",
-      "parcelAnalysis": "Analyse no Parzälle"
+      "parcelAnalysis": "Analyse no Parzälle",
+      "dataDistributionByParcel": "Dateverdeiling no Parzälle"
     }
   },
   "profile": {

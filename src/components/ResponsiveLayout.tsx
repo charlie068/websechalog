@@ -57,7 +57,7 @@ export default function ResponsiveLayout({
       )}
 
       {/* Top Header */}
-      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white sticky top-0 z-30">
+      <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white sticky top-0 z-30">
         <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
@@ -72,7 +72,11 @@ export default function ResponsiveLayout({
                 </svg>
               </button>
 
-              <div className="text-2xl lg:text-3xl">🌾</div>
+              <img
+                src="/sechalog_logo.png"
+                alt="SechaLog Logo"
+                className="h-8 lg:h-10 w-auto"
+              />
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold">SechaLog Portal</h1>
                 <p className="text-green-100 text-sm lg:text-base hidden sm:block">Client: {client.nom_client}</p>
@@ -94,14 +98,14 @@ export default function ResponsiveLayout({
         </div>
 
         {/* Navigation Tabs - Visible on all screen sizes */}
-        <div className="border-t border-green-500/30">
+        <div className="border-t border-blue-400/30">
           <div className="px-4 lg:px-8 py-2">
             <nav className="flex space-x-2 lg:space-x-4 overflow-x-auto">
               {navigationItems.map((item) => (
                 currentPage === item.key ? (
                   <div
                     key={item.key}
-                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 rounded-lg bg-white/20 text-white font-medium text-sm lg:text-base whitespace-nowrap"
+                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 rounded-lg bg-white/25 text-white font-medium text-sm lg:text-base whitespace-nowrap shadow-sm"
                   >
                     <span>{item.icon}</span>
                     <span>{item.label}</span>
@@ -110,7 +114,7 @@ export default function ResponsiveLayout({
                   <Link
                     key={item.key}
                     href={item.href}
-                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 rounded-lg text-green-100 hover:bg-white/10 font-medium text-sm lg:text-base transition-colors whitespace-nowrap"
+                    className="flex items-center space-x-2 px-3 lg:px-4 py-2 rounded-lg text-blue-100 hover:bg-white/15 font-medium text-sm lg:text-base transition-colors whitespace-nowrap"
                   >
                     <span>{item.icon}</span>
                     <span>{item.label}</span>

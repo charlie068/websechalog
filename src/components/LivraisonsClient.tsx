@@ -18,7 +18,7 @@ interface LivraisonsClientProps {
 
 // Helper function to convert product ID to product name with translation
 const getProductName = (productId: number | null | undefined, safeT: (key: string, fallback?: string) => string): string => {
-  if (!productId) return 'N/A'
+  if (!productId) return safeT('common.notAvailable', 'N/A')
 
   const productMap: { [key: number]: string } = {
     1: safeT('products.mais', 'Corn'),
@@ -33,8 +33,10 @@ const getProductName = (productId: number | null | undefined, safeT: (key: strin
 }
 
 // Helper function to format rendement
-const formatRendement = (rendement: number | null): string => {
-  if (rendement === null || rendement === 0 || !rendement) return 'N/A'
+const formatRendement = (rendement: number | null, safeT?: (key: string, fallback?: string) => string): string => {
+  if (rendement === null || rendement === 0 || !rendement) {
+    return safeT ? safeT('common.notAvailable', 'N/A') : 'N/A'
+  }
   return rendement.toFixed(2)
 }
 
@@ -618,7 +620,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">{safeT('deliveries.banners.averageYield', 'Average yield')}</p>
-              <p className="text-3xl font-bold text-yellow-600">{formatRendement(stats.moyenneRendement)}</p>
+              <p className="text-3xl font-bold text-yellow-600">{formatRendement(stats.moyenneRendement, safeT)}</p>
             </div>
             <div className="text-center">
               <p className="text-sm text-gray-500">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</p>
@@ -679,10 +681,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                           {livraison.humidite ? livraison.humidite.toFixed(1) : '0.0'}%
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-center text-purple-600">
-                          {formatRendement(calculateRendement(livraison.poids_sec || 0, livraison.parcelle || safeT('common.other', 'Other')))}
+                          {formatRendement(calculateRendement(livraison.poids_sec || 0, livraison.parcelle || safeT('common.other', 'Other')), safeT)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {livraison.chauffeur || 'N/A'}
+                          {livraison.chauffeur || safeT('common.notAvailable', 'N/A')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
@@ -760,7 +762,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                         {stats.poidsBrut.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-center text-purple-600">
-                        {formatRendement(stats.rendement)}
+                        {formatRendement(stats.rendement, safeT)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-center text-blue-600">
                         {stats.humidite.toFixed(1)}%

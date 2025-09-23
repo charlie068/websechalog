@@ -20,7 +20,8 @@
     "phone": "Phone",
     "address": "Address",
     "selectDate": "Select a date",
-    "other": "Other"
+    "other": "Other",
+    "notAvailable": "N/A"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -110,7 +111,8 @@
       "humidity": "Humidity",
       "hectares": "hectares",
       "tonnes": "tonnes",
-      "tonnesPerHectare": "t/ha"
+      "tonnesPerHectare": "t/ha",
+      "noSurfaceArea": "No surface area"
     }
   },
   "deliveries": {
