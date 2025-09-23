@@ -745,23 +745,23 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
 
 
           {/* Entrées/Sorties/Balance Statistics */}
-          <div className="bg-blue-100 text-gray-800 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <div className="bg-blue-100 text-gray-800 rounded-lg p-2 lg:p-6 mb-3 lg:mb-6">
+            <h3 className="text-sm lg:text-base font-medium mb-2 lg:mb-4 flex items-center">
               <span className="mr-2">⚖️</span>
               {safeT('deliveries.summary.entryExitBalance', 'Entry/Exit Balance')}
             </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="text-center">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📥 {safeT('deliveries.banners.totalEntries', 'ENTRIES')} (kg)</p>
-                <p className="text-2xl font-bold text-green-600">{totalStats.totalEntrees.toLocaleString()}</p>
+            <div className="grid grid-cols-3 gap-2 lg:gap-6">
+              <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
+                <p className="text-xs font-normal text-gray-600 lg:text-xs lg:font-semibold lg:uppercase lg:tracking-wide">📥 <span className="lg:hidden">{safeT('deliveries.banners.totalEntries', 'ENT')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.totalEntries', 'ENTRIES')} (kg)</span></p>
+                <p className="text-sm lg:text-2xl font-semibold lg:font-bold text-green-600">{totalStats.totalEntrees.toLocaleString()}</p>
               </div>
-              <div className="text-center">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">📤 {safeT('deliveries.banners.totalExits', 'EXITS')} (kg)</p>
-                <p className="text-2xl font-bold text-red-600">{totalStats.totalSorties.toLocaleString()}</p>
+              <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
+                <p className="text-xs font-normal text-gray-600 lg:text-xs lg:font-semibold lg:uppercase lg:tracking-wide">📤 <span className="lg:hidden">{safeT('deliveries.banners.totalExits', 'EX')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.totalExits', 'EXITS')} (kg)</span></p>
+                <p className="text-sm lg:text-2xl font-semibold lg:font-bold text-red-600">{totalStats.totalSorties.toLocaleString()}</p>
               </div>
-              <div className="text-center">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">⚖️ {safeT('deliveries.banners.netBalance', 'BALANCE')} (kg)</p>
-                <p className={`text-2xl font-bold ${totalStats.balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
+                <p className="text-xs font-normal text-gray-600 lg:text-xs lg:font-semibold lg:uppercase lg:tracking-wide">⚖️ <span className="lg:hidden">{safeT('deliveries.banners.netBalance', 'BAL')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.netBalance', 'BALANCE')} (kg)</span></p>
+                <p className={`text-sm lg:text-2xl font-semibold lg:font-bold ${totalStats.balance >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {totalStats.balance.toLocaleString()}
                 </p>
               </div>
@@ -769,27 +769,27 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
           </div>
 
           {/* Rendement Information */}
-          <div className="bg-green-50 rounded-lg shadow p-6 mb-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+          <div className="bg-green-50 rounded-lg shadow p-2 lg:p-6 mb-3 lg:mb-8">
+            <h2 className="text-sm lg:text-base font-medium text-gray-900 mb-2 lg:mb-4 flex items-center">
               <span className="mr-2">🌾</span>
               {safeT('deliveries.summary.parcelAnalysis', 'Agricultural yield')}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="text-center">
-                <p className="text-sm text-gray-500">{safeT('dashboard.statistics.totalSurface', 'Total surface')}</p>
-                <p className="text-3xl font-bold text-green-600">{totalStats.surfaceTotale.toFixed(1)} ha</p>
+            <div className="grid grid-cols-4 gap-2 lg:gap-6">
+              <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
+                <p className="text-xs text-gray-500 lg:text-sm"><span className="lg:hidden">{safeT('dashboard.statistics.totalSurface', 'Surface')}</span><span className="hidden lg:inline">{safeT('dashboard.statistics.totalSurface', 'Total surface')}</span></p>
+                <p className="text-sm lg:text-3xl font-semibold lg:font-bold text-green-600">{totalStats.surfaceTotale.toFixed(1)} ha</p>
               </div>
-              <div className="text-center">
-                <p className="text-sm text-gray-500">{safeT('dashboard.statistics.totalProduction', 'Total production')}</p>
-                <p className="text-3xl font-bold text-blue-600">{(totalStats.totalPoidsSec / 1000).toFixed(1)} t</p>
+              <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
+                <p className="text-xs text-gray-500 lg:text-sm"><span className="lg:hidden">{safeT('dashboard.statistics.totalProduction', 'Prod')}</span><span className="hidden lg:inline">{safeT('dashboard.statistics.totalProduction', 'Total production')}</span></p>
+                <p className="text-sm lg:text-3xl font-semibold lg:font-bold text-blue-600">{(totalStats.totalPoidsSec / 1000).toFixed(1)} t</p>
               </div>
-              <div className="text-center">
-                <p className="text-sm text-gray-500">{safeT('dashboard.statistics.globalYield', 'Global yield')}</p>
-                <p className="text-3xl font-bold text-yellow-600">{totalStats.rendementGlobal !== null ? totalStats.rendementGlobal.toFixed(2) + ' t/ha' : 'ND'}</p>
+              <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
+                <p className="text-xs text-gray-500 lg:text-sm"><span className="lg:hidden">{safeT('dashboard.statistics.globalYield', 'Yield')}</span><span className="hidden lg:inline">{safeT('dashboard.statistics.globalYield', 'Global yield')}</span></p>
+                <p className="text-sm lg:text-3xl font-semibold lg:font-bold text-yellow-600">{totalStats.rendementGlobal !== null ? totalStats.rendementGlobal.toFixed(2) + ' t/ha' : 'ND'}</p>
               </div>
-              <div className="text-center">
-                <p className="text-sm text-gray-500">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</p>
-                <p className="text-3xl font-bold text-purple-600">{totalStats.moyenneHumidite.toFixed(1)}%</p>
+              <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
+                <p className="text-xs text-gray-500 lg:text-sm"><span className="lg:hidden">{safeT('deliveries.banners.averageHumidity', 'Humid')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</span></p>
+                <p className="text-sm lg:text-3xl font-semibold lg:font-bold text-purple-600">{totalStats.moyenneHumidite.toFixed(1)}%</p>
               </div>
             </div>
           </div>
