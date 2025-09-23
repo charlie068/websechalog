@@ -11,8 +11,22 @@ export async function PATCH(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+    // Debug logging for Vercel
+    console.log('Environment check:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseAnonKey,
+      urlLength: supabaseUrl?.length,
+      keyLength: supabaseAnonKey?.length
+    })
+
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
+      return NextResponse.json({
+        error: 'Missing Supabase configuration',
+        debug: {
+          hasUrl: !!supabaseUrl,
+          hasKey: !!supabaseAnonKey
+        }
+      }, { status: 500 })
     }
 
     // Get the current user from the session using SSR client
