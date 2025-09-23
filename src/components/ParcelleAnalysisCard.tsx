@@ -105,6 +105,7 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
             : null
 
 
+
           setStats({
             totalLivraisons,
             totalPoidsSec,

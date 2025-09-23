@@ -20,10 +20,23 @@ export default function LoginPage() {
     setIsLoading(true)
     setError('')
 
+    // Get values directly from form elements to handle autofill
+    const formData = new FormData(e.target as HTMLFormElement)
+    const emailValue = formData.get('email') as string || email
+    const passwordValue = formData.get('password') as string || password
+
+
+    // Validate that we have both email and password
+    if (!emailValue || !passwordValue) {
+      setError('Email et mot de passe requis')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: emailValue,
+        password: passwordValue,
       })
 
 

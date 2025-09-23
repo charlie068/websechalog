@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Client, Livraison } from '@/lib/supabase'
@@ -33,8 +33,11 @@ const getProductName = (productId: number | null | undefined, safeT: (key: strin
 }
 
 // Helper function to format rendement
-const formatRendement = (rendement: number | null, safeT?: (key: string, fallback?: string) => string): string => {
+const formatRendement = (rendement: number | null, safeT?: (key: string, fallback?: string) => string, hasNoSurface?: boolean): string => {
   if (rendement === null || rendement === 0 || !rendement) {
+    if (hasNoSurface && safeT) {
+      return safeT('dashboard.parcels.noSurfaceArea', 'No surface area')
+    }
     return safeT ? safeT('common.notAvailable', 'N/A') : 'N/A'
   }
   return rendement.toFixed(2)
@@ -107,7 +110,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
   }}>({})
 
   // Calculate initial statistics for initialLivraisons
-  const calculateInitialStats = () => {
+  const calculateInitialStats = useCallback(() => {
     const filtered = initialLivraisons
 
     // Calculate basic stats
@@ -152,6 +155,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     const totalPoidsSecTonnes = totalPoidsSecFromAreaParcelles / 1000 // Convert to tonnes
     const moyenneRendement = (surfaceTotale > 0 && totalPoidsSecFromAreaParcelles > 0) ? totalPoidsSecTonnes / surfaceTotale : null
 
+
     // Calculate entrées, sorties, and balance
     const totalEntrees = filtered
       .filter(liv => liv.type_operation === 'entree')
@@ -173,7 +177,50 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
       totalSorties,
       balance
     })
-  }
+
+    // Calculate per-parcelle stats
+    const parcelleStats: {[parcelle: string]: {livraisons: number, poidsSec: number, poidsBrut: number, poidsSecEntrees: number, rendement: number, humidite: number}} = {}
+
+    filtered.forEach(liv => {
+      const parcelleName = liv.parcelle || safeT('common.other', 'Other')
+      if (!parcelleStats[parcelleName]) {
+        parcelleStats[parcelleName] = {
+          livraisons: 0,
+          poidsSec: 0,
+          poidsBrut: 0,
+          poidsSecEntrees: 0, // Track entry operations only for yield calculation
+          rendement: null,
+          humidite: 0
+        }
+      }
+      parcelleStats[parcelleName].livraisons++
+      parcelleStats[parcelleName].poidsSec += liv.poids_sec || 0
+      parcelleStats[parcelleName].poidsBrut += liv.poids_brut || 0
+
+      // Only count dry weight from entry operations for yield calculation
+      if (liv.type_operation === 'entree') {
+        parcelleStats[parcelleName].poidsSecEntrees += liv.poids_sec || 0
+      }
+
+      if (liv.humidite) parcelleStats[parcelleName].humidite += liv.humidite
+    })
+
+    // Calculate averages for each parcelle, including proper rendement calculation
+    Object.keys(parcelleStats).forEach(parcelle => {
+      const stats = parcelleStats[parcelle]
+      stats.humidite = stats.livraisons > 0 ? stats.humidite / stats.livraisons : 0
+
+      // Calculate rendement in t/ha - use only entry operations
+      const surface = parcelles[parcelle]?.surface_hectares
+      if (surface && surface > 0 && stats.poidsSecEntrees > 0) {
+        stats.rendement = (stats.poidsSecEntrees / 1000) / surface // t/ha
+      } else {
+        stats.rendement = null
+      }
+    })
+
+    setStatsParcelle(parcelleStats)
+  }, [initialLivraisons, parcelles])
 
   // Set initial filters from URL params and fetch parcelles data
   useEffect(() => {
@@ -199,14 +246,14 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
   // Calculate initial statistics when parcelles data is loaded
   useEffect(() => {
-    if (Object.keys(parcelles).length > 0) {
+    if (Object.keys(parcelles).length > 0 && initialLivraisons.length > 0) {
       calculateInitialStats()
     }
-  }, [parcelles, initialLivraisons])
+  }, [parcelles, initialLivraisons, calculateInitialStats])
 
   const fetchParcelles = async () => {
     try {
-      const { data: parcellesData } = await supabase
+      const { data: parcellesData, error } = await supabase
         .from('parcelles')
         .select('nom_parcelle, surface_hectares')
         .eq('client_local_id', client.local_id)
@@ -226,7 +273,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
       setParcelles(parcelleMap)
     } catch (error) {
-      // Silently handle error
+      console.error('Error fetching parcelles:', error)
     }
   }
 
@@ -247,6 +294,9 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     if (!dateDebut || !dateFin) {
       return
     }
+
+    // Don't calculate yield stats if parcelles data is not available yet
+    const hasParcelles = Object.keys(parcelles).length > 0
 
     setLoading(true)
     try {
@@ -302,9 +352,12 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
           : 0
 
         // Calculate rendement (yield per hectare) - only for entree operations from parcelles with area data
-        const parcelleNamesWithArea = new Set(Object.keys(parcelles).filter(name =>
-          parcelles[name]?.surface_hectares && parcelles[name].surface_hectares > 0
-        ))
+        let moyenneRendement = null
+
+        if (hasParcelles) {
+          const parcelleNamesWithArea = new Set(Object.keys(parcelles).filter(name =>
+            parcelles[name]?.surface_hectares && parcelles[name].surface_hectares > 0
+          ))
 
         // Also ensure raw database parcelle names are included for lookup
         const allParcelleNames = [...parcelleNamesWithArea]
@@ -327,8 +380,9 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
           sum + (parcelles[name]?.surface_hectares || 0), 0
         )
 
-        const totalPoidsSecTonnes = totalPoidsSecFromAreaParcelles / 1000 // Convert to tonnes
-        const moyenneRendement = (surfaceTotale > 0 && totalPoidsSecFromAreaParcelles > 0) ? totalPoidsSecTonnes / surfaceTotale : null
+          const totalPoidsSecTonnes = totalPoidsSecFromAreaParcelles / 1000 // Convert to tonnes
+          moyenneRendement = (surfaceTotale > 0 && totalPoidsSecFromAreaParcelles > 0) ? totalPoidsSecTonnes / surfaceTotale : null
+        }
 
         // Calculate entrées, sorties, and balance
         const totalEntrees = filtered
@@ -353,8 +407,8 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         })
 
         // Calculate per-parcelle stats
-        const parcelleStats: {[parcelle: string]: {livraisons: number, poidsSec: number, poidsBrut: number, rendement: number, humidite: number}} = {}
-        
+        const parcelleStats: {[parcelle: string]: {livraisons: number, poidsSec: number, poidsBrut: number, poidsSecEntrees: number, rendement: number, humidite: number}} = {}
+
         filtered.forEach(liv => {
           const parcelleName = liv.parcelle || safeT('common.other', 'Other')
           if (!parcelleStats[parcelleName]) {
@@ -362,6 +416,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
               livraisons: 0,
               poidsSec: 0,
               poidsBrut: 0,
+              poidsSecEntrees: 0, // Track entry operations only for yield calculation
               rendement: null,
               humidite: 0
             }
@@ -369,6 +424,12 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
           parcelleStats[parcelleName].livraisons++
           parcelleStats[parcelleName].poidsSec += liv.poids_sec || 0
           parcelleStats[parcelleName].poidsBrut += liv.poids_brut || 0
+
+          // Only count dry weight from entry operations for yield calculation
+          if (liv.type_operation === 'entree') {
+            parcelleStats[parcelleName].poidsSecEntrees += liv.poids_sec || 0
+          }
+
           if (liv.humidite) parcelleStats[parcelleName].humidite += liv.humidite
         })
 
@@ -377,10 +438,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
           const stats = parcelleStats[parcelle]
           stats.humidite = stats.livraisons > 0 ? stats.humidite / stats.livraisons : 0
 
-          // Calculate rendement in t/ha
+          // Calculate rendement in t/ha - use only entry operations
           const surface = parcelles[parcelle]?.surface_hectares
-          if (surface && surface > 0 && stats.poidsSec > 0) {
-            stats.rendement = (stats.poidsSec / 1000) / surface // t/ha
+          if (surface && surface > 0 && stats.poidsSecEntrees > 0) {
+            stats.rendement = (stats.poidsSecEntrees / 1000) / surface // t/ha
           } else {
             stats.rendement = null
           }
@@ -403,7 +464,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     } else if (dateDebut && dateFin && !parcelleFilter && !typeFilter && !searchTerm) {
       fetchFilteredData()
     }
-  }, [dateDebut, dateFin, parcelleFilter, typeFilter, searchTerm, client.local_id])
+  }, [dateDebut, dateFin, parcelleFilter, typeFilter, searchTerm, client.local_id, parcelles])
 
   // Get unique parcelles for filter dropdown
   const uniqueParcelles = Array.from(new Set(initialLivraisons.map(liv => liv.parcelle).filter(Boolean)))
@@ -762,7 +823,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                         {stats.poidsBrut.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-center text-purple-600">
-                        {formatRendement(stats.rendement, safeT)}
+                        {formatRendement(stats.rendement, safeT, !parcelles[parcelle]?.surface_hectares)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-center text-blue-600">
                         {stats.humidite.toFixed(1)}%
