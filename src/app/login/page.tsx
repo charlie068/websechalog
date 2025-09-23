@@ -13,7 +13,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -32,11 +31,8 @@ export default function LoginPage() {
         setError(`Erreur: ${error.message}`)
       } else if (data.user) {
         setError('')
-        setSuccess(true)
-        // Automatically redirect to dashboard after successful login
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 500)
+        // Immediately redirect to dashboard after successful login
+        router.push('/dashboard')
       } else {
         setError('Aucune donnée utilisateur reçue')
       }
@@ -62,14 +58,6 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
               {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-              ✅ Connexion réussie! 
-              <Link href="/dashboard" className="ml-2 font-bold underline">
-                Accéder au tableau de bord →
-              </Link>
             </div>
           )}
           <div className="rounded-md shadow-sm -space-y-px">
