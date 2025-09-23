@@ -657,13 +657,13 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
     >
           {/* Dashboard Title */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">🏠 {safeT('dashboard.title', 'Dashboard')}</h1>
+            <h1 className="text-lg lg:text-2xl font-bold text-gray-900 mb-2">🏠 {safeT('dashboard.title', 'Dashboard')}</h1>
             <p className="text-gray-600">{safeT('dashboard.subtitle', 'Overview of your agricultural activity')}</p>
           </div>
 
           {/* Filter Section */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6 mb-4 lg:mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4 items-end">
             {/* Date Début */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">

@@ -154,46 +154,46 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
         </div>
 
       {stats && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-blue-50 rounded">
-              <div className="text-2xl font-bold text-blue-600">
+        <div className="space-y-2 lg:space-y-4">
+          <div className="grid grid-cols-2 gap-2 lg:gap-4">
+            <div className="text-center p-2 lg:p-3 bg-blue-50 rounded">
+              <div className="text-base lg:text-2xl font-semibold lg:font-bold text-blue-600">
                 {stats.totalLivraisons}
               </div>
-              <div className="text-sm text-gray-600">{safeT('deliveries.banners.totalDeliveries', 'Deliveries')}</div>
+              <div className="text-xs lg:text-sm text-gray-600">{safeT('deliveries.banners.totalDeliveries', 'Deliveries')}</div>
             </div>
-            <div className="text-center p-3 bg-green-50 rounded">
-              <div className="text-2xl font-bold text-green-600">
+            <div className="text-center p-2 lg:p-3 bg-green-50 rounded">
+              <div className="text-base lg:text-2xl font-semibold lg:font-bold text-green-600">
                 {stats.totalPoidsSec.toFixed(0)} kg
               </div>
-              <div className="text-sm text-gray-600">{safeT('deliveries.banners.totalWeight', 'Total dry weight')}</div>
+              <div className="text-xs lg:text-sm text-gray-600">{safeT('deliveries.banners.totalWeight', 'Total dry weight')}</div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center p-3 bg-blue-50 rounded">
-              <div className="text-2xl font-bold text-blue-600">
+          <div className="grid grid-cols-2 gap-2 lg:gap-4">
+            <div className="text-center p-2 lg:p-3 bg-blue-50 rounded">
+              <div className="text-base lg:text-2xl font-semibold lg:font-bold text-blue-600">
                 {parcelle.surface_hectares ? `${parcelle.surface_hectares.toFixed(2)} ha` : 'ND'}
               </div>
-              <div className="text-sm text-gray-600">📐 {safeT('dashboard.parcels.surface', 'Surface')}</div>
+              <div className="text-xs lg:text-sm text-gray-600">📐 {safeT('dashboard.parcels.surface', 'Surface')}</div>
             </div>
-            <div className="text-center p-3 bg-purple-50 rounded">
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="text-center p-2 lg:p-3 bg-purple-50 rounded">
+              <div className="text-base lg:text-2xl font-semibold lg:font-bold text-purple-600">
                 {stats.moyenneHumidite.toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-600">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</div>
+              <div className="text-xs lg:text-sm text-gray-600">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</div>
             </div>
           </div>
 
           {/* Rendement section */}
-          <div className="bg-orange-50 rounded p-3 text-center">
-            <div className="text-2xl font-bold text-orange-600">
+          <div className="bg-orange-50 rounded p-2 lg:p-3 text-center">
+            <div className="text-base lg:text-2xl font-semibold lg:font-bold text-orange-600">
               {stats.rendement !== null ? `${stats.rendement.toFixed(2)} t/ha` :
                 parcelle.surface_hectares === null || parcelle.surface_hectares === undefined || parcelle.surface_hectares === 0
                   ? safeT('dashboard.parcels.noSurfaceArea', 'No surface area')
                   : safeT('common.notAvailable', 'N/A')}
             </div>
-            <div className="text-sm text-gray-600">🌾 {safeT('dashboard.parcels.yield', 'Yield')}</div>
+            <div className="text-xs lg:text-sm text-gray-600">🌾 {safeT('dashboard.parcels.yield', 'Yield')}</div>
           </div>
 
           {stats.derniereLivraison && (

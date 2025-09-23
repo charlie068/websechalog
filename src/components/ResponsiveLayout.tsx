@@ -58,7 +58,7 @@ export default function ResponsiveLayout({
 
       {/* Top Header */}
       <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white sticky top-0 z-30">
-        <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-6">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               {/* Mobile menu button */}
@@ -75,11 +75,11 @@ export default function ResponsiveLayout({
               <img
                 src="/sechalog_logo.png"
                 alt="SechaLog Logo"
-                className="h-8 lg:h-10 w-auto"
+                className="h-10 lg:h-10 w-auto"
               />
               <div>
-                <h1 className="text-xl lg:text-2xl font-bold">SechaLog Portal</h1>
-                <p className="text-green-100 text-sm lg:text-base hidden sm:block">Client: {client.nom_client}</p>
+                <h1 className="text-2xl lg:text-2xl font-bold">SechaLog Portal</h1>
+                <p className="text-green-100 text-base lg:text-base hidden sm:block">Client: {client.nom_client}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">

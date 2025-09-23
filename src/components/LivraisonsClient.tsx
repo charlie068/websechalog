@@ -643,30 +643,30 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         </div>
 
         {/* Entrées/Sorties/Balance Statistics */}
-        <div className="bg-blue-100 text-gray-800 rounded-lg p-2 lg:p-6 mb-3 lg:mb-6">
-          <h3 className="text-sm lg:text-base font-medium mb-2 flex items-center">
+        <div className="bg-blue-100 text-gray-800 rounded-lg p-4 lg:p-6 mb-4 lg:mb-6">
+          <h3 className="text-base lg:text-lg font-medium mb-3 flex items-center">
             <span className="mr-2">⚖️</span>
             {safeT('deliveries.summary.entryExitBalance', 'Entry/Exit Balance')}
           </h3>
           <div className="grid grid-cols-3 gap-2 lg:gap-4">
             <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
               <p className="text-xs font-normal text-gray-600 lg:text-xs lg:font-semibold lg:uppercase lg:tracking-wide">📥 <span className="lg:hidden">{safeT('deliveries.banners.totalEntries', 'ENT')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.totalEntries', 'ENTRIES')} (kg)</span></p>
-              <p className="text-sm lg:text-base font-semibold text-green-600">{stats.totalEntrees.toLocaleString()}</p>
+              <p className="text-lg lg:text-2xl font-semibold lg:font-bold text-green-600">{stats.totalEntrees.toLocaleString()}</p>
             </div>
             <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
               <p className="text-xs font-normal text-gray-600 lg:text-xs lg:font-semibold lg:uppercase lg:tracking-wide">📤 <span className="lg:hidden">{safeT('deliveries.banners.totalExits', 'EX')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.totalExits', 'EXITS')} (kg)</span></p>
-              <p className="text-sm lg:text-base font-semibold text-red-600">{stats.totalSorties.toLocaleString()}</p>
+              <p className="text-lg lg:text-2xl font-semibold lg:font-bold text-red-600">{stats.totalSorties.toLocaleString()}</p>
             </div>
             <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
               <p className="text-xs font-normal text-gray-600 lg:text-xs lg:font-semibold lg:uppercase lg:tracking-wide">⚖️ <span className="lg:hidden">{safeT('deliveries.banners.netBalance', 'BAL')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.netBalance', 'BALANCE')} (kg)</span></p>
-              <p className="text-sm lg:text-base font-semibold text-blue-600">{stats.balance.toLocaleString()}</p>
+              <p className="text-lg lg:text-2xl font-semibold lg:font-bold text-blue-600">{stats.balance.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
         {/* Rendement Information */}
-        <div className="bg-green-50 rounded-lg shadow p-2 lg:p-6 mb-3 lg:mb-8">
-          <h2 className="text-sm lg:text-base font-medium text-gray-900 mb-2 flex items-center">
+        <div className="bg-green-50 rounded-lg shadow p-4 lg:p-6 mb-4 lg:mb-8">
+          <h2 className="text-base lg:text-lg font-medium text-gray-900 mb-3 flex items-center">
             <span className="mr-2">🌾</span>
             {safeT('dashboard.parcels.yield', 'Agricultural yield')}
           </h2>
