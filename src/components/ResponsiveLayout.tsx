@@ -78,11 +78,14 @@ export default function ResponsiveLayout({
                 className="h-10 lg:h-10 w-auto"
               />
               <div>
-                <h1 className="text-2xl lg:text-2xl font-bold">SechaLog Portal</h1>
+                <h1 className="text-2xl lg:text-2xl font-bold">
+                  <span className="sm:hidden">SechaLog</span>
+                  <span className="hidden sm:inline">SechaLog Portal</span>
+                </h1>
                 <p className="text-green-100 text-base lg:text-base hidden sm:block">Client: {client.nom_client}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 lg:space-x-4">
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
               <LanguageSwitcher />
               <form action="/api/auth/logout" method="post">
                 <button

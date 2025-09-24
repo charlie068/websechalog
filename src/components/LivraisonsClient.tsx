@@ -86,6 +86,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
   const [dateFin, setDateFin] = useState<Date | null>(null)
   const [parcelleFilter, setParcelleFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [productFilter, setProductFilter] = useState(1) // 1 = Mais (default)
   const [searchTerm, setSearchTerm] = useState('')
   
   // Stats
@@ -321,10 +322,15 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         
         // Apply text search if provided
         if (searchTerm) {
-          filtered = filtered.filter(liv => 
+          filtered = filtered.filter(liv =>
             liv.parcelle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             liv.chauffeur?.toLowerCase().includes(searchTerm.toLowerCase())
           )
+        }
+
+        // Apply product filter if provided (0 = All products)
+        if (productFilter > 0) {
+          filtered = filtered.filter(liv => liv.produit_local_id === productFilter)
         }
         
         setLivraisons(filtered)
@@ -459,13 +465,11 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
   // Auto-fetch when filters change (but not on initial render if we have initial data)
   useEffect(() => {
-    // Only fetch if we have meaningful filter changes or if dates are set
-    if (dateDebut && dateFin && (parcelleFilter || typeFilter || searchTerm)) {
-      fetchFilteredData()
-    } else if (dateDebut && dateFin && !parcelleFilter && !typeFilter && !searchTerm) {
+    // Fetch when dates are set (with or without other filters)
+    if (dateDebut && dateFin) {
       fetchFilteredData()
     }
-  }, [dateDebut, dateFin, parcelleFilter, typeFilter, searchTerm, client.local_id, parcelles])
+  }, [dateDebut, dateFin, parcelleFilter, typeFilter, productFilter, searchTerm, client.local_id, parcelles])
 
   // Get unique parcelles for filter dropdown
   const uniqueParcelles = Array.from(new Set(initialLivraisons.map(liv => liv.parcelle).filter(Boolean)))
@@ -522,7 +526,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
           {/* Filter Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
             {/* Date début */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -590,6 +594,24 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                 <option value="">{safeT('deliveries.filters.allOperations', 'All operations')}</option>
                 <option value="entree">📥 {safeT('deliveries.operations.entree', 'Entries')}</option>
                 <option value="sortie">📤 {safeT('deliveries.operations.sortie', 'Exits')}</option>
+              </select>
+            </div>
+
+            {/* Product Filter */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                🌾 {safeT('deliveries.filters.product', 'Product')}:
+              </label>
+              <select
+                value={productFilter}
+                onChange={(e) => setProductFilter(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {getProducts(safeT).map(product => (
+                  <option key={product.id} value={product.id}>
+                    {product.emoji} {product.name}
+                  </option>
+                ))}
               </select>
             </div>
 
