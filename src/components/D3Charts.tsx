@@ -192,13 +192,13 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       .attr('class', 'bar')
       .attr('x', d => x(d[0]) || 0)
       .attr('width', x.bandwidth())
-      .attr('y', height)
-      .attr('height', 0)
+      .attr('y', d => y(d[1].poidsSec / 1000))
+      .attr('height', d => height - y(d[1].poidsSec / 1000))
       .attr('fill', '#3B82F6')
       .attr('rx', 4)
       .on('mouseover', function(event, d) {
         d3.select(this).attr('fill', '#1D4ED8')
-        
+
         // Tooltip
         const tooltip = d3.select('body').append('div')
           .attr('class', 'tooltip')
@@ -209,7 +209,6 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
           .style('border-radius', '4px')
           .style('font-size', '12px')
           .style('pointer-events', 'none')
-          .style('opacity', 0)
 
         tooltip.html(`
           <strong>${d[0]}</strong><br/>
@@ -219,18 +218,12 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
         `)
         .style('left', (event.pageX + 10) + 'px')
         .style('top', (event.pageY - 10) + 'px')
-        .transition()
-        .duration(200)
         .style('opacity', 1)
       })
       .on('mouseout', function() {
         d3.select(this).attr('fill', '#3B82F6')
         d3.selectAll('.tooltip').remove()
       })
-      .transition()
-      .duration(800)
-      .attr('y', d => y(d[1].poidsSec / 1000))
-      .attr('height', d => height - y(d[1].poidsSec / 1000))
 
     // X Axis
     g.append('g')

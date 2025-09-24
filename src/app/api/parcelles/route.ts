@@ -54,6 +54,7 @@ export async function PATCH(request: NextRequest) {
         .update({
           nom_parcelle: parcelle.nom_parcelle,
           surface_hectares: parcelle.surface_hectares,
+          actif: true,
           last_modified: new Date().toISOString()
         })
         .eq('id', parcelle.id)

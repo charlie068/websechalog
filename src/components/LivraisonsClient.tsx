@@ -257,6 +257,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         .from('parcelles')
         .select('nom_parcelle, surface_hectares')
         .eq('client_local_id', client.local_id)
+        .eq('actif', true)
 
       const parcelleMap: {[name: string]: {surface_hectares?: number}} = {}
       
@@ -273,7 +274,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
       setParcelles(parcelleMap)
     } catch (error) {
-      console.error('Error fetching parcelles:', error)
+      // Error fetching parcelles
     }
   }
 
@@ -848,6 +849,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                 client_local_id: client.local_id,
                 nom_parcelle,
                 surface_hectares: data.surface_hectares || 0,
+                actif: true, // We only show active parcelles
                 last_modified: '', // Not used in D3Charts
                 created_at: '' // Not used in D3Charts
               }))}

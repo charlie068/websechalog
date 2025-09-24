@@ -54,6 +54,7 @@ export default function ProfileClient({ client, user }: ProfileClientProps) {
         .from('parcelles')
         .select('*')
         .eq('client_local_id', client.local_id)
+        .eq('actif', true)
         .order('nom_parcelle')
 
       if (error) throw error
@@ -138,6 +139,7 @@ export default function ProfileClient({ client, user }: ProfileClientProps) {
       client_local_id: client.local_id,
       nom_parcelle: '',
       surface_hectares: 0,
+      actif: true,
       last_modified: '',
       created_at: ''
     }

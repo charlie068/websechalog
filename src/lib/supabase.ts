@@ -27,6 +27,7 @@ export interface Parcelle {
   client_local_id: number
   nom_parcelle: string
   surface_hectares: number
+  actif: boolean
   last_modified: string
   created_at: string
 }

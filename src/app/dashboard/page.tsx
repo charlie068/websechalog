@@ -40,11 +40,12 @@ export default async function DashboardPage() {
     return <NoClientAccess />
   }
 
-  // Get parcelles for this client
+  // Get parcelles for this client (only active ones)
   const { data: parcelles } = await supabase
     .from('parcelles')
     .select('*')
     .eq('client_local_id', client.local_id)
+    .eq('actif', true)
 
   // Get recent livraisons for this client (last 30 days)
   const thirtyDaysAgo = new Date()
