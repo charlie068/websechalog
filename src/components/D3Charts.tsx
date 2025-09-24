@@ -1100,7 +1100,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       .range([height, 0])
       .domain([0, d3.max(data, d => d[1]) || 0])
 
-    // Add bars
+    // Add bars with hover functionality
     g.selectAll('.bar')
       .data(data)
       .enter().append('rect')
@@ -1110,6 +1110,24 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       .attr('y', d => y(d[1]))
       .attr('height', d => height - y(d[1]))
       .attr('fill', '#f59e0b')
+      .attr('rx', 4)
+      .on('mouseover', function(event, d) {
+        const tooltip = d3.select('body').append('div')
+          .attr('class', 'tooltip')
+          .style('position', 'absolute')
+          .style('background', 'rgba(0,0,0,0.8)')
+          .style('color', 'white')
+          .style('padding', '8px')
+          .style('border-radius', '4px')
+          .style('font-size', '12px')
+          .style('pointer-events', 'none')
+          .html(`<strong>${d[0]}</strong><br/>${safeT('dashboard.charts.axisLabels.yield', 'Yield')}: ${d[1].toFixed(2)} t/ha`)
+          .style('left', (event.pageX + 10) + 'px')
+          .style('top', (event.pageY - 10) + 'px')
+          .style('opacity', 0)
+          .transition().duration(200).style('opacity', 1)
+      })
+      .on('mouseout', () => d3.selectAll('.tooltip').remove())
 
     // Add x axis
     g.append('g')
@@ -1125,14 +1143,16 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     g.append('g')
       .call(d3.axisLeft(y))
 
-    // Add y axis label
+    // Add y axis label - positioned closer to the axis
     g.append('text')
       .attr('transform', 'rotate(-90)')
-      .attr('y', 0 - margin.left)
+      .attr('y', -55)
       .attr('x', 0 - (height / 2))
       .attr('dy', '1em')
       .style('text-anchor', 'middle')
-      .text(safeT('dashboard.charts.axisLabels.yieldPerHectare'))
+      .style('font-size', '12px')
+      .style('font-weight', 'bold')
+      .text(safeT('dashboard.charts.axisLabels.yieldPerHectare', 'Rendement (t/ha)'))
 
     // Add title
     svg.append('text')
