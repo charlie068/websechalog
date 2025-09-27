@@ -21,6 +21,36 @@ interface DashboardClientProps {
   initialLivraisons: Livraison[]
 }
 
+// Product definitions with safe translation
+const getAllProducts = (safeT: (key: string, fallback?: string) => string) => [
+  { id: 0, name: safeT('products.all', 'All products'), emoji: '🌾', color: 'gray' },
+  { id: 1, name: safeT('products.mais', 'Corn'), emoji: '🌽', color: 'yellow' },
+  { id: 2, name: safeT('products.ble', 'Wheat'), emoji: '🌾', color: 'amber' },
+  { id: 3, name: safeT('products.orge', 'Barley'), emoji: '🌾', color: 'green' },
+  { id: 4, name: safeT('products.soja', 'Soybean'), emoji: '🟢', color: 'green' },
+  { id: 5, name: safeT('products.tournesol', 'Sunflower'), emoji: '🌻', color: 'yellow' },
+  { id: 6, name: safeT('products.colza', 'Rapeseed'), emoji: '🟡', color: 'yellow' }
+]
+
+// Filter products based on what exists in client's delivery data
+const getAvailableProducts = (livraisons: Livraison[], safeT: (key: string, fallback?: string) => string) => {
+  const allProducts = getAllProducts(safeT)
+  const usedProductIds = Array.from(new Set(livraisons.map(liv => liv.produit_local_id).filter(Boolean)))
+
+  // Always include "All products" option
+  const availableProducts = [allProducts[0]]
+
+  // Add products that exist in the delivery data
+  usedProductIds.forEach(productId => {
+    const product = allProducts.find(p => p.id === productId)
+    if (product) {
+      availableProducts.push(product)
+    }
+  })
+
+  return availableProducts
+}
+
 export default function DashboardClient({ client, initialParcelles, initialLivraisons }: DashboardClientProps) {
   const { t, loading: translationsLoading, language } = useTranslations()
 
@@ -52,6 +82,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
   }
   const [dateDebut, setDateDebut] = useState<Date | null>(null)
   const [dateFin, setDateFin] = useState<Date | null>(null)
+  const [productFilter, setProductFilter] = useState(0) // 0 = All products (default)
   const [filteredLivraisons, setFilteredLivraisons] = useState<Livraison[]>(initialLivraisons)
   const [totalStats, setTotalStats] = useState({
     totalPoidsSec: 0,
@@ -110,12 +141,25 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
     
   }, [])
 
-  // Filter livraisons by date when filters change
+  // Set default product filter to first available product for client
+  useEffect(() => {
+    if (initialLivraisons.length > 0) {
+      const availableProducts = getAvailableProducts(initialLivraisons, safeT)
+      // If current productFilter is not available in client's data, set to first available product
+      const isCurrentProductAvailable = availableProducts.some(p => p.id === productFilter)
+      if (!isCurrentProductAvailable && availableProducts.length > 0) {
+        // Default to "All products" (id: 0) for dashboard
+        setProductFilter(0)
+      }
+    }
+  }, [initialLivraisons, productFilter, safeT])
+
+  // Filter livraisons by date and product when filters change
   useEffect(() => {
     if (dateDebut && dateFin) {
       fetchFilteredData()
     }
-  }, [dateDebut, dateFin])
+  }, [dateDebut, dateFin, productFilter])
 
   const fetchFilteredData = async () => {
     try {
@@ -134,25 +178,32 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
       const { data: livraisons } = await query.order('date_pesee', { ascending: false })
 
       if (livraisons) {
-        setFilteredLivraisons(livraisons as Livraison[])
+        let filtered = livraisons as Livraison[]
+
+        // Apply product filter if provided (0 = All products)
+        if (productFilter > 0) {
+          filtered = filtered.filter(liv => liv.produit_local_id === productFilter)
+        }
+
+        setFilteredLivraisons(filtered)
         
-        // Calculate total stats - only for entree operations
-        
-        if (livraisons.length > 0) {
-          livraisons.slice(0, 3).forEach((liv, i) => {
+        // Calculate total stats using filtered data - only for entree operations
+
+        if (filtered.length > 0) {
+          filtered.slice(0, 3).forEach((liv, i) => {
           })
         }
-        
-        const entreeLivraisons = livraisons.filter(liv => liv.type_operation === 'entree')
-        
+
+        const entreeLivraisons = filtered.filter(liv => liv.type_operation === 'entree')
+
         const totalPoidsSec = entreeLivraisons.reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
-        
+
         // Calculate entrées, sorties, and balance for all operations (not just entree)
-        const totalEntrees = livraisons
+        const totalEntrees = filtered
           .filter(liv => liv.type_operation === 'entree')
           .reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
-        
-        const totalSorties = livraisons
+
+        const totalSorties = filtered
           .filter(liv => liv.type_operation === 'sortie')
           .reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
         
@@ -684,7 +735,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
 
           {/* Filter Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6 mb-4 lg:mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 items-end">
             {/* Date Début */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -727,6 +778,24 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
                 maxDate={new Date()}
                 calendarStartDay={1}
               />
+            </div>
+
+            {/* Product Filter */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                🌾 {safeT('deliveries.filters.product', 'Product')}:
+              </label>
+              <select
+                value={productFilter}
+                onChange={(e) => setProductFilter(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {getAvailableProducts(initialLivraisons, safeT).map(product => (
+                  <option key={product.id} value={product.id}>
+                    {product.emoji} {product.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

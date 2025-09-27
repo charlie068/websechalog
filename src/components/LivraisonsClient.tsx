@@ -44,7 +44,7 @@ const formatRendement = (rendement: number | null, safeT?: (key: string, fallbac
 }
 
 // Product definitions with safe translation
-const getProducts = (safeT: (key: string, fallback?: string) => string) => [
+const getAllProducts = (safeT: (key: string, fallback?: string) => string) => [
   { id: 0, name: safeT('products.all', 'All products'), emoji: '🌾', color: 'gray' },
   { id: 1, name: safeT('products.mais', 'Corn'), emoji: '🌽', color: 'yellow' },
   { id: 2, name: safeT('products.ble', 'Wheat'), emoji: '🌾', color: 'amber' },
@@ -53,6 +53,28 @@ const getProducts = (safeT: (key: string, fallback?: string) => string) => [
   { id: 5, name: safeT('products.tournesol', 'Sunflower'), emoji: '🌻', color: 'yellow' },
   { id: 6, name: safeT('products.colza', 'Rapeseed'), emoji: '🟡', color: 'yellow' }
 ]
+
+// Filter products based on what exists in client's delivery data
+const getAvailableProducts = (livraisons: Livraison[], safeT: (key: string, fallback?: string) => string) => {
+  const allProducts = getAllProducts(safeT)
+  const usedProductIds = Array.from(new Set(livraisons.map(liv => liv.produit_local_id).filter(Boolean)))
+
+  // Always include "All products" option
+  const availableProducts = [allProducts[0]]
+
+  // Add products that exist in the delivery data
+  usedProductIds.forEach(productId => {
+    const product = allProducts.find(p => p.id === productId)
+    if (product) {
+      availableProducts.push(product)
+    }
+  })
+
+  return availableProducts
+}
+
+// Legacy function for compatibility
+const getProducts = (safeT: (key: string, fallback?: string) => string) => getAllProducts(safeT)
 
 const getProductInfo = (productId: number | null | undefined, safeT: (key: string, fallback?: string) => string) => {
   if (!productId) return { name: 'N/A', emoji: '❓', color: 'gray' }
@@ -244,6 +266,20 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     // Fetch parcelles data for surface area calculations
     fetchParcelles()
   }, [searchParams])
+
+  // Set default product filter to first available product for client
+  useEffect(() => {
+    if (initialLivraisons.length > 0) {
+      const availableProducts = getAvailableProducts(initialLivraisons, safeT)
+      // If current productFilter is not available in client's data, set to first available product
+      const isCurrentProductAvailable = availableProducts.some(p => p.id === productFilter)
+      if (!isCurrentProductAvailable && availableProducts.length > 0) {
+        // Set to first product after "All products" if available, otherwise "All products"
+        const defaultProduct = availableProducts.length > 1 ? availableProducts[1] : availableProducts[0]
+        setProductFilter(defaultProduct.id)
+      }
+    }
+  }, [initialLivraisons, productFilter, safeT])
 
   // Calculate initial statistics when parcelles data is loaded
   useEffect(() => {
@@ -492,7 +528,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
       <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">🌾 {safeT('deliveries.sidebar.filterByProduct', 'Filter by Product')}</h3>
         <div className="space-y-2">
-          {getProducts(safeT).map(product => (
+          {getAvailableProducts(initialLivraisons, safeT).map(product => (
             <button
               key={product.id}
               onClick={() => setProductFilter(product.id)}
