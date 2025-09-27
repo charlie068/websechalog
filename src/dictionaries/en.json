@@ -189,6 +189,7 @@
       "sortie": "Exit",
       "all": "All"
     },
+    "editHint": "Add new parcelles in Profile page",
     "summary": {
       "totalEntries": "Total entries",
       "totalExits": "Total exits",

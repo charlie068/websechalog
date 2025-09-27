@@ -179,6 +179,7 @@
       "sortie": "Sortie",
       "all": "Toutes"
     },
+    "editHint": "Ajouter nouvelles parcelles dans Profil",
     "summary": {
       "totalEntries": "Total entrées",
       "totalExits": "Total sorties",

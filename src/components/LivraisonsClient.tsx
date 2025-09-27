@@ -855,8 +855,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {editingRow === livraison.id ? (
                             <div className="flex items-center space-x-2">
-                              <input
-                                type="text"
+                              <select
                                 value={editingValue}
                                 onChange={(e) => setEditingValue(e.target.value)}
                                 onKeyDown={(e) => {
@@ -869,7 +868,18 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                                 className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 autoFocus
                                 disabled={updating}
-                              />
+                              >
+                                <option value="Autres">{safeT('common.other', 'Others')}</option>
+                                {Object.keys(parcelles)
+                                  .filter(name => name !== 'Autres' && name !== safeT('common.other', 'Others'))
+                                  .sort()
+                                  .map(parcelleName => (
+                                    <option key={parcelleName} value={parcelleName}>
+                                      {parcelleName}
+                                    </option>
+                                  ))
+                                }
+                              </select>
                               <button
                                 onClick={() => saveEdit(livraison.id)}
                                 disabled={updating}
@@ -886,6 +896,12 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                               >
                                 ✗
                               </button>
+                              <span
+                                className="text-blue-500 cursor-help"
+                                title={safeT('deliveries.editHint', 'Add new parcelles in Profile page')}
+                              >
+                                ℹ️
+                              </span>
                             </div>
                           ) : (
                             <div className="flex items-center justify-between group">
