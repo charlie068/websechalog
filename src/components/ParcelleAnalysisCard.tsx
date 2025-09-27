@@ -43,7 +43,13 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
           .from('livraisons')
           .select('*')
           .eq('client_local_id', clientId)
-          .eq('parcelle', parcelle.nom_parcelle)
+
+        // Handle "Autres" parcelle specially - it includes both null and 'Autres' parcelles
+        if (parcelle.nom_parcelle === 'Autres') {
+          query = query.or('parcelle.is.null,parcelle.eq.Autres')
+        } else {
+          query = query.eq('parcelle', parcelle.nom_parcelle)
+        }
 
         // Add date filtering if provided
         if (dateDebut) {
@@ -146,7 +152,7 @@ export default function ParcelleAnalysisCard({ parcelle, clientId, dateDebut, da
       <div className="p-4">
         <div className="flex justify-between items-start mb-4">
           <h3 className="text-lg font-medium text-gray-900">
-            🌾 {parcelle.nom_parcelle === 'Autres' ? safeT('common.other', 'Other') : parcelle.nom_parcelle}
+            🌾 {parcelle.nom_parcelle === 'Autres' ? safeT('common.other', 'Others') : parcelle.nom_parcelle}
           </h3>
           <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {parcelle.surface_hectares} ha

@@ -56,7 +56,7 @@ export default function RecentLivraisonsTable({ livraisons }: RecentLivraisonsTa
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {livraison.parcelle === 'Autres' ? safeT('common.other', 'Other') : (livraison.parcelle || safeT('common.other', 'Other'))}
+                  {livraison.parcelle === 'Autres' ? safeT('common.other', 'Others') : (livraison.parcelle || safeT('common.other', 'Others'))}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {livraison.poids_sec?.toFixed(0) || 0} kg

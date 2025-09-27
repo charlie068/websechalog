@@ -468,7 +468,7 @@ export default function ProfileClient({ client, user }: ProfileClientProps) {
                           ) : (
                             <div className={`px-3 py-2 border border-gray-200 rounded-md text-sm ${parcelle.nom_parcelle === 'Autres' ? 'bg-gray-100' : 'bg-gray-50'}`}>
                               {parcelle.nom_parcelle === 'Autres'
-                                ? safeT('common.other', 'Other')
+                                ? safeT('common.other', 'Others')
                                 : (parcelle.nom_parcelle || safeT('common.notDefined', 'Not defined'))
                               }
                               {parcelle.nom_parcelle === 'Autres' && (

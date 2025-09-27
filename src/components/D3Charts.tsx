@@ -100,7 +100,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
         humidite: d3.mean(v, d => d.humidite ? d.humidite : 0) || 0,
         count: v.length
       }),
-      d => d.parcelle === 'Autres' ? safeT('common.other', 'Other') : (d.parcelle || safeT('common.other', 'Other'))
+      d => d.parcelle === 'Autres' ? safeT('common.other', 'Others') : (d.parcelle || safeT('common.other', 'Others'))
     )
 
     // Create cumulative daily data
@@ -795,7 +795,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       .domain(d3.extent(data, d => (d.poids_sec || 0) / 1000) as [number, number])
 
     const color = d3.scaleOrdinal(d3.schemeCategory10)
-      .domain([...new Set(data.map(d => d.nom_parcelle === 'Autres' ? safeT('common.other', 'Other') : (d.nom_parcelle || safeT('common.other', 'Other'))))])
+      .domain([...new Set(data.map(d => d.nom_parcelle === 'Autres' ? safeT('common.other', 'Others') : (d.nom_parcelle || safeT('common.other', 'Others'))))])
 
     // Dots
     g.selectAll('.dot')
@@ -805,7 +805,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       .attr('r', 5)
       .attr('cx', d => x(d.humidite ? d.humidite : 0))
       .attr('cy', d => y((d.poids_sec || 0) / 1000))
-      .attr('fill', d => color(d.nom_parcelle === 'Autres' ? safeT('common.other', 'Other') : (d.nom_parcelle || safeT('common.other', 'Other'))))
+      .attr('fill', d => color(d.nom_parcelle === 'Autres' ? safeT('common.other', 'Others') : (d.nom_parcelle || safeT('common.other', 'Others'))))
       .attr('opacity', 0.7)
       .on('mouseover', function(event, d) {
         d3.select(this)
@@ -824,7 +824,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
           .style('opacity', 0)
 
         tooltip.html(`
-          <strong>${d.nom_parcelle === 'Autres' ? safeT('common.other', 'Other') : (d.nom_parcelle || safeT('common.other', 'Other'))}</strong><br/>
+          <strong>${d.nom_parcelle === 'Autres' ? safeT('common.other', 'Others') : (d.nom_parcelle || safeT('common.other', 'Others'))}</strong><br/>
           BL: ${d.numero_bl || 'N/A'}<br/>
           Date: ${new Date(d.date_pesee).toLocaleDateString('fr-FR')} ${new Date(d.date_pesee).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}<br/>
           Poids: ${((d.poids_sec || 0) / 1000).toFixed(1)}t<br/>
@@ -885,7 +885,7 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
     const heatmapData = d3.rollup(
       data,
       v => v.length,
-      d => d.nom_parcelle === 'Autres' ? safeT('common.other', 'Other') : (d.nom_parcelle || safeT('common.other', 'Other')),
+      d => d.nom_parcelle === 'Autres' ? safeT('common.other', 'Others') : (d.nom_parcelle || safeT('common.other', 'Others')),
       d => d3.timeFormat('%Y-%m')(new Date(d.date_pesee))
     )
 
@@ -1055,11 +1055,11 @@ export default function D3Charts({ livraisons, parcelles, t }: D3ChartsProps) {
       livraisonData,
       v => {
         const totalPoidsSec = d3.sum(v, d => d.poids_sec || 0)
-        const parcelleName = v[0]?.parcelle === 'Autres' ? safeT('common.other', 'Other') : (v[0]?.parcelle || safeT('common.other', 'Other'))
+        const parcelleName = v[0]?.parcelle === 'Autres' ? safeT('common.other', 'Others') : (v[0]?.parcelle || safeT('common.other', 'Others'))
         const surface = parcelleMap.get(parcelleName) || 0
         return surface > 0 ? (totalPoidsSec / 1000) / surface : 0 // t/ha
       },
-      d => d.parcelle === 'Autres' ? safeT('common.other', 'Other') : (d.parcelle || safeT('common.other', 'Other'))
+      d => d.parcelle === 'Autres' ? safeT('common.other', 'Others') : (d.parcelle || safeT('common.other', 'Others'))
     )
 
     // Filter out parcelles with 0 rendement (no surface area)

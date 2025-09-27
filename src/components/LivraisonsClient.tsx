@@ -136,10 +136,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     const allParcelleNames = [...parcelleNamesWithArea]
     allParcelleNames.forEach(name => {
       // Add both translated and untranslated versions for reliable lookup
-      if (name === safeT('common.other', 'Other')) {
+      if (name === safeT('common.other', 'Others')) {
         parcelleNamesWithArea.add('Autres')
       } else if (name === 'Autres') {
-        parcelleNamesWithArea.add(safeT('common.other', 'Other'))
+        parcelleNamesWithArea.add(safeT('common.other', 'Others'))
       }
     })
 
@@ -265,7 +265,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
       // Add "other" parcelle entries (may not be in parcelles table)
       // Store both the raw database value and translated version
       parcelleMap['Autres'] = { surface_hectares: undefined }
-      parcelleMap[safeT('common.other', 'Other')] = { surface_hectares: undefined }
+      parcelleMap[safeT('common.other', 'Others')] = { surface_hectares: undefined }
       
       parcellesData?.forEach(p => {
         if (p.nom_parcelle) {
@@ -370,10 +370,10 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         const allParcelleNames = [...parcelleNamesWithArea]
         allParcelleNames.forEach(name => {
           // Add both translated and untranslated versions for reliable lookup
-          if (name === safeT('common.other', 'Other')) {
+          if (name === safeT('common.other', 'Others')) {
             parcelleNamesWithArea.add('Autres')
           } else if (name === 'Autres') {
-            parcelleNamesWithArea.add(safeT('common.other', 'Other'))
+            parcelleNamesWithArea.add(safeT('common.other', 'Others'))
           }
         })
 
@@ -490,6 +490,26 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
       </div>
 
       <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">🌾 {safeT('deliveries.sidebar.filterByProduct', 'Filter by Product')}</h3>
+        <div className="space-y-2">
+          {getProducts(safeT).map(product => (
+            <button
+              key={product.id}
+              onClick={() => setProductFilter(product.id)}
+              className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors text-left ${
+                productFilter === product.id
+                  ? `bg-${product.color}-100 text-${product.color}-800 border-l-4 border-${product.color}-500`
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <span>{product.emoji}</span>
+              <span className="text-sm">{product.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 {safeT('deliveries.sidebar.quickActions', 'Quick Actions')}</h3>
         <div className="space-y-2">
           <button
@@ -597,23 +617,6 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
               </select>
             </div>
 
-            {/* Product Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                🌾 {safeT('deliveries.filters.product', 'Product')}:
-              </label>
-              <select
-                value={productFilter}
-                onChange={(e) => setProductFilter(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {getProducts(safeT).map(product => (
-                  <option key={product.id} value={product.id}>
-                    {product.emoji} {product.name}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             {/* Search */}
             <div>
@@ -750,7 +753,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                           {livraison.local_id || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {livraison.parcelle === 'Autres' ? safeT('common.other', 'Other') : (livraison.parcelle || safeT('common.other', 'Other'))}
+                          {livraison.parcelle === 'Autres' ? safeT('common.other', 'Others') : (livraison.parcelle || safeT('common.other', 'Others'))}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {getProductName(livraison.produit_local_id, safeT)}
@@ -765,7 +768,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                           {livraison.humidite ? livraison.humidite.toFixed(1) : '0.0'}%
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-center text-purple-600">
-                          {formatRendement(calculateRendement(livraison.poids_sec || 0, livraison.parcelle || safeT('common.other', 'Other')), safeT)}
+                          {formatRendement(calculateRendement(livraison.poids_sec || 0, livraison.parcelle || safeT('common.other', 'Others')), safeT)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {livraison.chauffeur || safeT('common.notAvailable', 'N/A')}
@@ -831,7 +834,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                   {Object.entries(statsParcelle).map(([parcelle, stats], index) => (
                     <tr key={parcelle} className={`hover:bg-blue-50 ${index % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {parcelle === 'Autres' ? safeT('common.other', 'Other') : parcelle}
+                        {parcelle === 'Autres' ? safeT('common.other', 'Others') : parcelle}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-center font-semibold text-orange-600">
                         {parcelles[parcelle]?.surface_hectares ? parcelles[parcelle].surface_hectares.toFixed(1) : 'N/A'}
