@@ -47,15 +47,15 @@ export default async function DashboardPage() {
     .eq('client_local_id', client.local_id)
     .eq('actif', true)
 
-  // Get recent livraisons for this client (last 30 days)
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  
+  // Get recent livraisons for this client (last 90 days for product filtering)
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+
   const { data: livraisons } = await supabase
     .from('livraisons')
     .select('*')
     .eq('client_local_id', client.local_id)
-    .gte('date_pesee', thirtyDaysAgo.toISOString().split('T')[0])
+    .gte('date_pesee', ninetyDaysAgo.toISOString().split('T')[0])
     .order('date_pesee', { ascending: false })
 
   return (

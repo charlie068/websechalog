@@ -781,7 +781,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
             </div>
 
             {/* Product Filter */}
-            <div>
+            <div className="bg-blue-50 p-2 rounded">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 🌾 {safeT('deliveries.filters.product', 'Product')}:
               </label>
