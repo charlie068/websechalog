@@ -735,7 +735,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
 
           {/* Filter Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6 mb-4 lg:mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 items-end">
+          <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4 md:items-end">
             {/* Date Début */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
