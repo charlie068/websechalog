@@ -735,7 +735,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
 
           {/* Filter Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6 mb-4 lg:mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 items-end">
             {/* Date Début */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -795,6 +795,9 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
                     {product.emoji} {product.name}
                   </option>
                 ))}
+                {getAvailableProducts(initialLivraisons, safeT).length === 0 && (
+                  <option value={0}>🌾 No products available</option>
+                )}
               </select>
             </div>
           </div>
