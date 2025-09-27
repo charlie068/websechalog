@@ -807,7 +807,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
             </div>
             <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
               <p className="text-xs text-gray-500 lg:text-sm"><span className="lg:hidden">{safeT('deliveries.banners.averageYield', 'Yield')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.averageYield', 'Average yield')}</span></p>
-              <p className="text-sm lg:text-base font-semibold text-yellow-600">{formatRendement(stats.moyenneRendement, safeT)}</p>
+              <p className="text-sm lg:text-3xl font-semibold lg:font-bold text-yellow-600">{formatRendement(stats.moyenneRendement, safeT)}</p>
             </div>
             <div className="text-center lg:bg-transparent lg:border-none lg:p-0">
               <p className="text-xs text-gray-500 lg:text-sm"><span className="lg:hidden">{safeT('deliveries.banners.averageHumidity', 'Humid')}</span><span className="hidden lg:inline">{safeT('deliveries.banners.averageHumidity', 'Average humidity')}</span></p>

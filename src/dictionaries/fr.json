@@ -195,6 +195,7 @@
   "profile": {
     "title": "Mon profil",
     "subtitle": "Gérez vos informations personnelles et de contact",
+    "manageData": "Gérez vos données",
     "personalInfo": "Informations personnelles",
     "fullName": "Nom complet",
     "street": "Rue",
