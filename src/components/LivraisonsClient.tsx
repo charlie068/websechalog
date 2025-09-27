@@ -183,7 +183,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     const parcelleStats: {[parcelle: string]: {livraisons: number, poidsSec: number, poidsBrut: number, poidsSecEntrees: number, rendement: number, humidite: number}} = {}
 
     filtered.forEach(liv => {
-      const parcelleName = liv.parcelle || safeT('common.other', 'Other')
+      const parcelleName = liv.parcelle || 'Autres'
       if (!parcelleStats[parcelleName]) {
         parcelleStats[parcelleName] = {
           livraisons: 0,
@@ -417,7 +417,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         const parcelleStats: {[parcelle: string]: {livraisons: number, poidsSec: number, poidsBrut: number, poidsSecEntrees: number, rendement: number, humidite: number}} = {}
 
         filtered.forEach(liv => {
-          const parcelleName = liv.parcelle || safeT('common.other', 'Other')
+          const parcelleName = liv.parcelle || 'Autres'
           if (!parcelleStats[parcelleName]) {
             parcelleStats[parcelleName] = {
               livraisons: 0,

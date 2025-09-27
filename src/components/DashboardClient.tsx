@@ -24,6 +24,23 @@ interface DashboardClientProps {
 export default function DashboardClient({ client, initialParcelles, initialLivraisons }: DashboardClientProps) {
   const { t, loading: translationsLoading, language } = useTranslations()
 
+  // Check if there are livraisons without a specific parcelle (null, undefined, or 'Autres')
+  const hasAutresLivraisons = initialLivraisons.some(liv => !liv.parcelle || liv.parcelle === 'Autres')
+
+  // Add virtual "Autres" parcelle if there are livraisons without specific parcelles
+  const allParcelles = hasAutresLivraisons
+    ? [...initialParcelles, {
+        id: -1,
+        local_id: -1,
+        client_local_id: client.local_id,
+        nom_parcelle: 'Autres',
+        surface_hectares: 0,
+        actif: true,
+        last_modified: '',
+        created_at: ''
+      }]
+    : initialParcelles
+
   // Safe translation function
   const safeT = (key: string, fallback?: string): string => {
     try {
@@ -162,7 +179,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
           : 0
 
         // Calculate rendement (yield per hectare) - only for parcelles with area data
-        const parcellesWithArea = initialParcelles.filter(p => p.surface_hectares && p.surface_hectares > 0)
+        const parcellesWithArea = allParcelles.filter(p => p.surface_hectares && p.surface_hectares > 0)
         const surfaceTotale = parcellesWithArea.reduce((sum, p) => sum + p.surface_hectares, 0)
         
         // Filter livraisons to only include entree operations from parcelles with area data
@@ -408,7 +425,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
 
       // Create ParcelleAnalysisCard-style layouts using PDF drawing commands
       
-      if (initialParcelles && initialParcelles.length > 0) {
+      if (allParcelles && allParcelles.length > 0) {
         // Add new page for parcelle cards
         pdf.addPage()
         currentPage++
@@ -419,11 +436,15 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
         pdf.text(safeT('deliveries.summary.parcelAnalysis', 'Analysis by parcel'), margin, yPosition)
         yPosition += 20
 
-        for (let i = 0; i < initialParcelles.length; i++) {
-          const parcelle = initialParcelles[i]
+        for (let i = 0; i < allParcelles.length; i++) {
+          const parcelle = allParcelles[i]
           
           // Calculate parcelle-specific stats from filteredLivraisons
-          const parcelleLivraisons = filteredLivraisons.filter(liv => liv.parcelle === parcelle.nom_parcelle)
+          const parcelleLivraisons = filteredLivraisons.filter(liv =>
+            parcelle.nom_parcelle === 'Autres'
+              ? (!liv.parcelle || liv.parcelle === 'Autres')
+              : liv.parcelle === parcelle.nom_parcelle
+          )
           const totalLivraisons = parcelleLivraisons.length
           const totalPoidsSec = parcelleLivraisons.reduce((sum, liv) => sum + (liv.poids_sec || 0), 0)
           
@@ -798,13 +819,13 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
           {filteredLivraisons && filteredLivraisons.length > 0 && (
             <div className="mb-8">
               <h3 className="text-lg font-medium text-gray-900 mb-4">📈 {safeT('dashboard.charts.title')}</h3>
-              <D3Charts livraisons={filteredLivraisons} parcelles={initialParcelles} t={safeT} />
+              <D3Charts livraisons={filteredLivraisons} parcelles={allParcelles} t={safeT} />
             </div>
           )}
 
 
           {/* Parcelles Analysis with Navigation */}
-          {initialParcelles && initialParcelles.length > 0 && (
+          {allParcelles && allParcelles.length > 0 && (
             <div className="mb-8">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
@@ -818,7 +839,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
                 </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {initialParcelles.map((parcelle) => (
+                {allParcelles.map((parcelle) => (
                   <div key={parcelle.id} className="relative">
                     <ParcelleAnalysisCard
                       parcelle={parcelle}
