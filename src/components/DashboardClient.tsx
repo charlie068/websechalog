@@ -692,6 +692,26 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
       </div>
 
       <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">🌾 {safeT('deliveries.sidebar.filterByProduct', 'Filter by Product')}</h3>
+        <div className="space-y-2">
+          {getAvailableProducts(initialLivraisons, safeT).map(product => (
+            <button
+              key={product.id}
+              onClick={() => setProductFilter(product.id)}
+              className={`w-full flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors text-left ${
+                productFilter === product.id
+                  ? `bg-${product.color}-100 text-${product.color}-800 border-l-4 border-${product.color}-500`
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <span>{product.emoji}</span>
+              <span className="text-sm">{product.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-6 border-b border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 {safeT('dashboard.quickActions', 'Quick actions')}</h3>
         <div className="space-y-2">
           <button
@@ -735,7 +755,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
 
           {/* Filter Section */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6 mb-4 lg:mb-6">
-          <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4 md:items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4 items-end">
             {/* Date Début */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -780,26 +800,6 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
               />
             </div>
 
-            {/* Product Filter */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                🌾 {safeT('deliveries.filters.product', 'Product')}:
-              </label>
-              <select
-                value={productFilter}
-                onChange={(e) => setProductFilter(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {getAvailableProducts(initialLivraisons, safeT).map(product => (
-                  <option key={product.id} value={product.id}>
-                    {product.emoji} {product.name}
-                  </option>
-                ))}
-                {getAvailableProducts(initialLivraisons, safeT).length === 0 && (
-                  <option value={0}>🌾 No products available</option>
-                )}
-              </select>
-            </div>
           </div>
 
           {/* Action buttons */}
