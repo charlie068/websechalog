@@ -110,6 +110,11 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
   const [typeFilter, setTypeFilter] = useState('')
   const [productFilter, setProductFilter] = useState(1) // 1 = Mais (default)
   const [searchTerm, setSearchTerm] = useState('')
+
+  // Edit states for inline editing
+  const [editingRow, setEditingRow] = useState<number | null>(null)
+  const [editingValue, setEditingValue] = useState('')
+  const [updating, setUpdating] = useState(false)
   
   // Stats
   const [stats, setStats] = useState({
@@ -499,6 +504,65 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
     }
   }
 
+  // Update parcelle name in database
+  const updateParcelleInDatabase = async (livraisonId: number, newParcelle: string) => {
+    setUpdating(true)
+    try {
+      const { error } = await supabase
+        .from('livraisons')
+        .update({ parcelle: newParcelle })
+        .eq('id', livraisonId)
+
+      if (error) {
+        console.error('Error updating parcelle:', error)
+        alert(safeT('errors.updateFailed', 'Failed to update parcelle. Please try again.'))
+        return false
+      }
+
+      // Update local state
+      setLivraisons(prev => prev.map(liv =>
+        liv.id === livraisonId
+          ? { ...liv, parcelle: newParcelle }
+          : liv
+      ))
+
+      // Refresh stats if needed
+      if (dateDebut && dateFin) {
+        fetchFilteredData()
+      }
+
+      return true
+    } catch (error) {
+      console.error('Error updating parcelle:', error)
+      alert(safeT('errors.updateFailed', 'Failed to update parcelle. Please try again.'))
+      return false
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  // Handle edit start
+  const startEditing = (livraisonId: number, currentParcelle: string) => {
+    setEditingRow(livraisonId)
+    setEditingValue(currentParcelle || '')
+  }
+
+  // Handle edit cancel
+  const cancelEditing = () => {
+    setEditingRow(null)
+    setEditingValue('')
+  }
+
+  // Handle edit save
+  const saveEdit = async (livraisonId: number) => {
+    const trimmedValue = editingValue.trim()
+    const success = await updateParcelleInDatabase(livraisonId, trimmedValue || 'Autres')
+    if (success) {
+      setEditingRow(null)
+      setEditingValue('')
+    }
+  }
+
   // Auto-fetch when filters change (but not on initial render if we have initial data)
   useEffect(() => {
     // Fetch when dates are set (with or without other filters)
@@ -789,7 +853,54 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
                           {livraison.local_id || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {livraison.parcelle === 'Autres' ? safeT('common.other', 'Others') : (livraison.parcelle || safeT('common.other', 'Others'))}
+                          {editingRow === livraison.id ? (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="text"
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    saveEdit(livraison.id)
+                                  } else if (e.key === 'Escape') {
+                                    cancelEditing()
+                                  }
+                                }}
+                                className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                autoFocus
+                                disabled={updating}
+                              />
+                              <button
+                                onClick={() => saveEdit(livraison.id)}
+                                disabled={updating}
+                                className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                                title={safeT('common.save', 'Save')}
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEditing}
+                                disabled={updating}
+                                className="text-red-600 hover:text-red-800 disabled:opacity-50"
+                                title={safeT('common.cancel', 'Cancel')}
+                              >
+                                ✗
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between group">
+                              <span>
+                                {livraison.parcelle === 'Autres' ? safeT('common.other', 'Others') : (livraison.parcelle || safeT('common.other', 'Others'))}
+                              </span>
+                              <button
+                                onClick={() => startEditing(livraison.id, livraison.parcelle)}
+                                className="opacity-0 group-hover:opacity-100 ml-2 text-blue-600 hover:text-blue-800 transition-opacity"
+                                title={safeT('common.edit', 'Edit')}
+                              >
+                                ✏️
+                              </button>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {getProductName(livraison.produit_local_id, safeT)}

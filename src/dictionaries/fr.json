@@ -218,7 +218,8 @@
     "noClientAccess": "Accès client non autorisé",
     "serverError": "Erreur serveur",
     "notFound": "Page non trouvée",
-    "unauthorized": "Non autorisé"
+    "unauthorized": "Non autorisé",
+    "updateFailed": "Échec de la mise à jour. Veuillez réessayer."
   },
   "products": {
     "mais": "Maïs",

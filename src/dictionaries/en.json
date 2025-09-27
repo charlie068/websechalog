@@ -235,7 +235,8 @@
     "noClientAccess": "Client access denied",
     "serverError": "Server error",
     "notFound": "Page not found",
-    "unauthorized": "Unauthorized"
+    "unauthorized": "Unauthorized",
+    "updateFailed": "Update failed. Please try again."
   },
   "products": {
     "mais": "Corn",
