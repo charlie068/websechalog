@@ -143,7 +143,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
 
   // Set default product filter to first available product for client
   useEffect(() => {
-    if (initialLivraisons.length > 0) {
+    if (initialLivraisons.length > 0 && !translationsLoading) {
       const availableProducts = getAvailableProducts(initialLivraisons, safeT)
       // If current productFilter is not available in client's data, set to first available product
       const isCurrentProductAvailable = availableProducts.some(p => p.id === productFilter)
@@ -152,7 +152,7 @@ export default function DashboardClient({ client, initialParcelles, initialLivra
         setProductFilter(0)
       }
     }
-  }, [initialLivraisons, productFilter, safeT])
+  }, [initialLivraisons, productFilter, translationsLoading])
 
   // Filter livraisons by date and product when filters change
   useEffect(() => {

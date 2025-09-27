@@ -269,7 +269,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
 
   // Set default product filter to first available product for client
   useEffect(() => {
-    if (initialLivraisons.length > 0) {
+    if (initialLivraisons.length > 0 && !translationsLoading) {
       const availableProducts = getAvailableProducts(initialLivraisons, safeT)
       // If current productFilter is not available in client's data, set to first available product
       const isCurrentProductAvailable = availableProducts.some(p => p.id === productFilter)
@@ -279,7 +279,7 @@ export default function LivraisonsClient({ client, initialLivraisons }: Livraiso
         setProductFilter(defaultProduct.id)
       }
     }
-  }, [initialLivraisons, productFilter, safeT])
+  }, [initialLivraisons, productFilter, translationsLoading])
 
   // Calculate initial statistics when parcelles data is loaded
   useEffect(() => {
